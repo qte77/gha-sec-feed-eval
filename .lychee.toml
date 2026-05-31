@@ -1,0 +1,24 @@
+# Lychee link checker config
+# https://lychee.cli.rs/usage/config/
+
+accept = [200, 201, 204, 429]
+timeout = 30
+max_retries = 4
+retry_wait_time = 2
+
+# scriv changelog fragments are partials with links resolved relative
+# to the eventual CHANGELOG.md (repo root), not their changelog.d/
+# location — exclude until they're collected at release.
+exclude_path = ["changelog.d"]
+
+# Exclude URLs that are auth-walled, rate-limit bots, or are documented
+# elsewhere as inaccessible to scrapers.
+exclude = [
+    # Shields.io badges — rate-limited
+    "^https://img\\.shields\\.io",
+    # CodeFactor — 404 for repos not yet analyzed
+    "^https://www\\.codefactor\\.io",
+    # GitHub Actions workflow status badges — intermittent 502 from
+    # github.com's CDN to the lychee crawler; the badges work in browsers.
+    "^https://github\\.com/.+/actions/workflows/.+/badge\\.svg$",
+]

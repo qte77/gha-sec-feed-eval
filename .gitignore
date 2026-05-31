@@ -1,0 +1,105 @@
+# ignores for building the README dir tree
+.git
+
+# editors
+.vscode/
+.idea/
+
+# test
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# linter, formatter, type checker
+.ruff_cache/
+.pyright_cache/
+
+# uv venv
+.venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+poetry.lock
+pipfile.lock
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+whl/
+wheel/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+
+# pyenv
+.python-version
+
+# python importtime
+importtime/
+
+# Agent-managed working memory (per qte77 convention)
+MEMORY.md
+
+# Local CLI run output — fresh on every `make smoke` / cron invocation.
+# Production CI commits these via the eval workflow's verified Git Data API
+# path (Blob → Tree → Commit → Ref) so they show as `verified: true` on `main`.
+data/priority.jsonl
+data/priority-meta.json
+data/REPORT.md
+
+# Claude Code sandbox bwrap phantom files
+# https://github.com/anthropics/claude-code/issues/17727
+/HEAD
+/config
+/hooks
+/objects
+/refs
+/.bash_profile
+/.bashrc
+/.profile
+/.zprofile
+/.zshrc
+/.gitconfig
+/.gitmodules
+/.ripgreprc
+/.mcp.json
+/.env
+/.idea
+/.vscode
+/.claude/agents
+/.claude/commands
+/.claude/skills
+/.claude/worktrees/
