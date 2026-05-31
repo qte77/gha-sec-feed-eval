@@ -21,4 +21,8 @@ exclude = [
     # GitHub Actions workflow status badges — intermittent 502 from
     # github.com's CDN to the lychee crawler; the badges work in browsers.
     "^https://github\\.com/.+/actions/workflows/.+/badge\\.svg$",
+    # qte77/gha-sec-feed producer feed — 404 until producer ships v0.1.0
+    # with the documented `data/feed.jsonl` artifact. Remove this exclude
+    # line once the producer is live (tracked in the dependency issue).
+    "^https://raw\\.githubusercontent\\.com/qte77/gha-sec-feed/main/data/feed\\.jsonl$",
 ]

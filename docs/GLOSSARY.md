@@ -19,13 +19,13 @@ category: technical
 
 | Abbrev | Expansion |
 |---|---|
-| **CVE** | Common Vulnerabilities and Exposures - standard vulnerability identifier (`CVE-YYYY-NNNNN`). |
-| **CVSS** | Common Vulnerability Scoring System - 0.0-10.0 base severity score. We score-bump on `cvss >= 9.0`. See [`docs/scoring.md`](scoring.md). |
+| **CVE** | [Common Vulnerabilities and Exposures](https://www.cve.org/) - standard vulnerability identifier (`CVE-YYYY-NNNNN`). |
+| **CVSS** | [Common Vulnerability Scoring System](https://www.first.org/cvss/) (FIRST.org) - 0.0-10.0 base severity score. We score-bump on `cvss >= 9.0`. See [`docs/scoring.md`](scoring.md). |
 | **CISA KEV** | [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) catalogue - vulns observed in active exploitation. We score-bump when `kev: true`. |
 | **EPSS** | [Exploit Prediction Scoring System](https://www.first.org/epss/) (FIRST.org) - probabilistic forecast of exploitation in the next 30 days. We weight `epss_score * 2.0` into the priority score. |
-| **GHSA** | GitHub Security Advisory identifier - one of the `source` enum values in C1. |
-| **NVD** | National Vulnerability Database (NIST) - one of the `source` enum values in C1. |
-| **OSV** | Open Source Vulnerabilities database (Google) - one of the `source` enum values in C1 *and* the data source for our `osv-scanner.yaml` workflow. |
+| **GHSA** | [GitHub Security Advisory](https://docs.github.com/en/code-security/security-advisories/working-with-global-security-advisories-from-the-github-advisory-database/about-the-github-advisory-database) identifier - one of the `source` enum values in C1. |
+| **NVD** | [National Vulnerability Database](https://nvd.nist.gov/) (NIST) - one of the `source` enum values in C1. |
+| **OSV** | [Open Source Vulnerabilities](https://osv.dev/) database (Google) - one of the `source` enum values in C1 *and* the data source for our [`osv-scanner.yaml`](../.github/workflows/osv-scanner.yaml) workflow (calls [google/osv-scanner-action](https://github.com/google/osv-scanner-action)). |
 | **PoC** | Proof-of-Concept exploit code. Used in the `has_active_exploit()` heuristic in [`docs/scoring.md`](scoring.md). |
 
 ## MITRE frameworks
@@ -35,33 +35,15 @@ category: technical
 | **MITRE ATT&CK** | [Adversary tactics, techniques, and procedures](https://attack.mitre.org/) (TTPs). We map each CVE to ATT&CK technique IDs (e.g. `T1190` "Exploit Public-Facing Application"). |
 | **MITRE D3FEND** | [Defensive countermeasures](https://d3fend.mitre.org/) matched to ATT&CK techniques. We map each ATT&CK ID to D3FEND IDs (e.g. `D3-NTA` "Network Traffic Analysis"). |
 | **STIX** | [Structured Threat Information Expression](https://oasis-open.github.io/cti-documentation/stix/intro) - JSON serialisation we use for the vendored ATT&CK bundle under `vendor/`. |
-| **TTP** | Tactics, Techniques, and Procedures - what ATT&CK catalogues. |
+| **TTP** | Tactics, Techniques, and Procedures - what [ATT&CK](https://attack.mitre.org/) catalogues. |
 
 ## Formats
 
 | Abbrev | Expansion |
 |---|---|
-| **JSONL** | JSON Lines - one JSON object per line. Used for both C1 input and C2 output. |
-| **SBOM** | Software Bill of Materials. Produced by `sbom.yaml` (qte77/gha-sbom-action) and at release by Syft (`publish-release.yaml`). |
+| **JSONL** | [JSON Lines](https://jsonlines.org/) - one JSON object per line. Used for both C1 input and C2 output. |
+| **SBOM** | [Software Bill of Materials](https://www.cisa.gov/sbom). Produced by [`sbom.yaml`](../.github/workflows/sbom.yaml) (calls [qte77/gha-sbom-action](https://github.com/qte77/gha-sbom-action)) and at release by [Syft](https://github.com/anchore/syft) via [`publish-release.yaml`](../.github/workflows/publish-release.yaml). |
 | **SPDX** | [Software Package Data Exchange](https://spdx.dev/) - SBOM format we emit (`sbom.spdx.json`). |
-| **SARIF** | [Static Analysis Results Interchange Format](https://sarifweb.azurewebsites.net/) - what we upload to GitHub Code Scanning. |
-| **YAML** | YAML Ain't Markup Language - config + GHA workflow file format. |
-| **TOML** | Tom's Obvious Minimal Language - `pyproject.toml` config format. |
-
-## Tooling / infrastructure
-
-| Abbrev | Expansion |
-|---|---|
-| **GHA** | GitHub Actions. |
-| **SCA** | Software Composition Analysis - what `trivy.yaml` + `osv-scanner.yaml` perform on the dependency tree. |
-| **SAST** | Static Application Security Testing - what `codeql.yaml` performs on source code. |
-| **CodeQL** | GitHub's SAST query engine. |
-| **TDD** | Test-Driven Development - Red / Green / Refactor cycle. See [`AGENTS.md`](../AGENTS.md). |
-| **AHA** | Avoid Hasty Abstractions - one of our core principles alongside KISS / DRY / YAGNI. |
-| **KISS** | Keep It Simple, Stupid. |
-| **DRY** | Don't Repeat Yourself. |
-| **YAGNI** | You Aren't Gonna Need It. |
-| **MVP** | Minimum Viable Product. |
-| **PR** | Pull Request. |
-| **CI** | Continuous Integration. |
-| **CD** | Continuous Deployment. |
+| **SARIF** | [Static Analysis Results Interchange Format](https://sarifweb.azurewebsites.net/) - what we upload to [GitHub Code Scanning](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning). |
+| **YAML** | [YAML Ain't Markup Language](https://yaml.org/) - config + GitHub Actions workflow file format. |
+| **TOML** | [Tom's Obvious Minimal Language](https://toml.io/) - `pyproject.toml` config format. |

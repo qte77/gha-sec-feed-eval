@@ -8,7 +8,7 @@ category: technical
 
 ## C1 — Input (consumed from `qte77/gha-sec-feed`)
 
-**Source:** `https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl`
+**Source:** [raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl](https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl)
 **Format:** JSONL (one JSON object per line).
 **Pinned:** `schema_version: "1.0.0"`. Producer bump to 2.0.0 is a
 stop-and-ask trigger — adapt explicitly, not silently.
