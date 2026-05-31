@@ -67,8 +67,12 @@ CLI lands in phase 2b — see [`docs/architecture.md`](docs/architecture.md).
 
 | Contract | Version | Spec |
 |---|---|---|
-| C1 — input from `gha-sec-feed` | `1.0.0` (pinned) | [`docs/contracts.md`](docs/contracts.md) |
-| C2 — output of this evaluator | `1.0.0` | [`docs/contracts.md`](docs/contracts.md) |
+| **C1** (Contract 1) - input from `gha-sec-feed` | `1.0.0` (pinned) | [`docs/contracts.md`](docs/contracts.md) |
+| **C2** (Contract 2) - output of this evaluator | `1.0.0` | [`docs/contracts.md`](docs/contracts.md) |
+
+Abbreviations used across the project (C1 / C2 / CVE / CVSS / KEV / EPSS /
+ATT&CK / D3FEND / SBOM / SPDX / SARIF / GSFE_ / ...) are defined in
+[`docs/GLOSSARY.md`](docs/GLOSSARY.md).
 
 ## Docs
 
@@ -81,6 +85,7 @@ CLI lands in phase 2b — see [`docs/architecture.md`](docs/architecture.md).
   (lands 2d)
 - [Refresh vendored data](docs/refresh-vendored-data.md) — ATT&CK + D3FEND
   refresh runbook (lands 2b)
+- [Glossary](docs/GLOSSARY.md) — abbreviations used across the project
 - [Changelog](CHANGELOG.md) — semver, scriv-managed fragments
 
 ## License
