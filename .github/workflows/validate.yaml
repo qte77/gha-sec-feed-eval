@@ -1,0 +1,58 @@
+---
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: lint + types + complexity + lint_md + lint_links + test_cov
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dev + test dependencies
+        run: uv sync --group dev --group test
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Pyright type check
+        run: uv run pyright src
+
+      - name: Complexipy cognitive complexity (max 10)
+        run: uv run complexipy src --max-complexity-allowed 10
+
+      - name: Markdownlint
+        run: |
+          npx --yes markdownlint-cli --config .markdownlint.json '**/*.md' \
+            --ignore '.venv/**' --ignore 'node_modules/**' \
+            --ignore 'changelog.d/**'
+
+      - name: Pytest with coverage
+        run: uv run pytest --cov=src --cov-fail-under=0

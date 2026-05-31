@@ -1,0 +1,58 @@
+---
+# CodeQL static security analysis. Scans Python (`src/`).
+# https://docs.github.com/en/code-security/code-scanning
+name: CodeQL
+
+on:
+  # No branch filter so feature-branch pushes are also scanned. The
+  # `pull_request` trigger is intentionally absent: under it, SARIFs
+  # upload against the volatile merge-ref SHA which races GitHub's
+  # merge-protection check. Matches qte77/scrape-stock-kpi convention.
+  push:
+  schedule:
+    - cron: "27 11 * * 0"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa  # v4
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@7211b7c8077ea37d8641b6271f6a365a22a5fbfa  # v4
+
+      - name: Perform CodeQL Analysis
+        id: analyze
+        uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa  # v4
+        with:
+          output: sarif-results
+
+      - name: Dismiss alerts with inline suppression comments
+        uses: advanced-security/dismiss-alerts@046d6b48d2e43cf563f96f67332c47c432eff83e  # v2.0.2
+        with:
+          sarif-id: ${{ steps.analyze.outputs.sarif-id }}
+          sarif-file: sarif-results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
