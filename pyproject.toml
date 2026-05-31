@@ -1,0 +1,148 @@
+[project]
+name = "gha-sec-feed-eval"
+version = "0.0.0"
+description = "Evaluator that consumes the gha-sec-feed C1 JSONL feed, scores rows on a 0–10 priority formula, enriches with MITRE ATT&CK + D3FEND, and emits a C2 JSONL output + Markdown report."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "qte77" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic>=2.10",
+    "pydantic-settings>=2.6",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15",
+    "pyright>=1.1.400",
+    "complexipy>=5.5.0",
+    "bump-my-version>=0.29",
+    "scriv[toml]>=1.8",
+]
+test = [
+    "pytest>=9.0",
+    "pytest-cov>=7.1",
+    "hypothesis>=6.130",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gha_sec_feed_eval"]
+
+[tool.uv]
+default-groups = ["dev", "test"]
+# Cap dependency resolution to keep CI reproducible. Roll the date
+# forward when a needed security patch or feature sits above the cap.
+exclude-newer = "2026-06-01T00:00:00Z"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes (unused imports, undefined names)
+    "I",    # isort (import order)
+    "N",    # PEP-8 naming
+    "W",    # pycodestyle warnings
+    "UP",   # pyupgrade (modernize syntax)
+    "B",    # flake8-bugbear (likely bugs)
+    "S",    # flake8-bandit (security)
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+    "PT",   # pytest style
+    "ANN",  # flake8-annotations (type hints)
+    "TC",   # flake8-type-checking (move imports to TYPE_CHECKING)
+    "PGH",  # pygrep-hooks (no broad noqa, etc.)
+    "C90",  # mccabe cyclomatic complexity
+    "D",    # pydocstyle (docstring style)
+    "TRY",  # tryceratops (try/except discipline)
+]
+ignore = [
+    "TRY003",  # long messages outside exception classes — fine for one-off defensive raises
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "D", "ANN"]
+"scripts/**" = ["D", "ANN"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+extraPaths = ["src"]
+include = ["src"]
+reportMissingImports = "error"
+reportMissingTypeStubs = "none"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers -q --tb=short -m 'not network'"
+markers = [
+    "network: tests requiring network access (opt in via `pytest -m network`)",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/gha_sec_feed_eval/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+# Atomic version bumping. [project].version is the single source of
+# truth; bumpversion bumps + commits + syncs the README badge. Tag
+# creation is deferred to tag-release.yaml so the tag lands on the
+# main merge commit. CHANGELOG.md is owned by scriv (below) and
+# collected inside the bump-my-version.yaml workflow.
+[tool.bumpversion]
+current_version = "0.0.0"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+commit = true
+tag = true
+allow_dirty = false
+ignore_missing_version = false
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "v{new_version}"
+message = "chore(release): bump {current_version} -> {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "README.md"
+search = "version-{current_version}-blue"
+replace = "version-{new_version}-blue"
+
+# Changelog fragments — each PR adds one under changelog.d/ via
+# `make changelog_new`; `make changelog_preview` shows the assembled
+# entry. Fragments are collected at release time by the
+# bump-my-version.yaml workflow. Categories mirror CHANGELOG.md's
+# Keep-a-Changelog preamble.
+[tool.scriv]
+format = "md"
+fragment_directory = "changelog.d"
+categories = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
+md_header_level = "2"
+entry_title_template = "[{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
+md_html_anchors = false
