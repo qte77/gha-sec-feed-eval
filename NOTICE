@@ -25,6 +25,6 @@ VENDORED THIRD-PARTY DATA UNDER vendor/
   MITRE D3FEND (vendor/d3fend-mappings.json)
     https://d3fend.mitre.org/resources/legal/
     The MITRE Corporation, MIT License.
-    Source bundle: https://d3fend.mitre.org/api/
+    Source bundle: https://d3fend.mitre.org/
 
 See docs/refresh-vendored-data.md for refresh procedure and source URLs.

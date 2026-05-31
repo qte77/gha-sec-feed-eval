@@ -12,7 +12,7 @@ category: technical
 
 - Source URLs for the canonical bundles
   ([MITRE/cti](https://github.com/mitre/cti) for ATT&CK;
-  [d3fend.mitre.org/api](https://d3fend.mitre.org/api/) for D3FEND).
+  [d3fend.mitre.org](https://d3fend.mitre.org/) for D3FEND).
 - Curl + jq commands to fetch + minify into the vendored shapes used
   by `enrich/attack.py` and `enrich/d3fend.py`.
 - Cadence recommendation (quarterly is sufficient; ATT&CK ships ~2

@@ -1,4 +1,4 @@
-"""Module entry point — `python -m gha_sec_feed_eval`.
+"""Module entry point: `python -m gha_sec_feed_eval`.
 
 Delegates to :func:`gha_sec_feed_eval.cli.main`. The cli module lands
 in phase 2b; until then this raises a clear error rather than failing

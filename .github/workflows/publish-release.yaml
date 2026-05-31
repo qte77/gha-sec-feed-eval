@@ -57,9 +57,9 @@ jobs:
             in_block && /^## \[/ { exit }
             in_block { print }
           ' CHANGELOG.md)
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
             echo "notes<<NOTES_EOF"
             if [ -z "${NOTES// }" ]; then
               echo "Release $TAG. See CHANGELOG.md."

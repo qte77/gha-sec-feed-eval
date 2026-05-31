@@ -41,9 +41,12 @@ jobs:
             echo "no version change ($OLD == $NEW); nothing to tag"
             exit 0
           fi
-          echo "new=$NEW" >> "$GITHUB_OUTPUT"
-          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "bumped=true" >> "$GITHUB_OUTPUT"
+          COMMIT_SHA=$(git rev-parse HEAD)
+          {
+            echo "new=$NEW"
+            echo "commit_sha=$COMMIT_SHA"
+            echo "bumped=true"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create signed annotated tag via GitHub API
         if: steps.detect.outputs.bumped == 'true'
