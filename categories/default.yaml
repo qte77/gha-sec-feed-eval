@@ -1,0 +1,74 @@
+stack_keywords:
+  python:
+    - pip
+    - poetry
+    - uv
+    - pydantic
+    - pydantic-settings
+    - fastapi
+    - django
+    - flask
+    - pytest
+    - hypothesis
+    - sqlalchemy
+    - alembic
+    - httpx
+    - requests
+    - aiohttp
+    - numpy
+    - pandas
+    - pytorch
+    - tensorflow
+  typescript:
+    - npm
+    - yarn
+    - pnpm
+    - bun
+    - react
+    - vue
+    - svelte
+    - vite
+    - vitest
+    - jest
+    - eslint
+    - tsc
+    - typescript
+    - "@typescript-eslint/*"
+    - express
+    - fastify
+    - nextjs
+  rust:
+    - cargo
+    - tokio
+    - serde
+    - clap
+    - axum
+    - actix
+    - anyhow
+    - thiserror
+    - reqwest
+    - rayon
+  go:
+    - go-mod
+    - gin
+    - echo
+    - gorm
+    - cobra
+    - viper
+  docker:
+    - dockerfile
+    - alpine
+    - ubuntu
+    - debian
+    - distroless
+    - chainguard
+  github-actions:
+    - actions/checkout
+    - actions/setup-python
+    - actions/setup-node
+    - codeql-action
+    - dependabot
+priority_thresholds:
+  act_now: 8.0
+  this_week: 5.0
+match_strategy: "keyword-in-refs-or-affected-products"
