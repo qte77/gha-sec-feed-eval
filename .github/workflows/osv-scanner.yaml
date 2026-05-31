@@ -1,0 +1,36 @@
+---
+# https://github.com/google/osv-scanner-action
+# Scans pyproject.toml + uv.lock against the OSV.dev vulnerability database.
+#
+# `google/osv-scanner-action` is a REUSABLE WORKFLOW, not a composite
+# action — we call it at job level, not as a step. This means
+# `step-security/harden-runner` cannot be added as a pre-step inside
+# the reusable scan job (brief-mandated first-step pattern doesn't
+# apply when the entire job is delegated to a reusable workflow). The
+# reusable workflow declares its own minimal permissions block;
+# scope-level `permissions: {}` here makes that explicit.
+name: osv-scanner
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  scan:
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2  # v2.3.8
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    with:
+      scan-args: |-
+        --recursive
+        --skip-git
+        ./

@@ -1,0 +1,110 @@
+---
+name: bump-my-version
+
+# Manually-triggered version bump. Bumps pyproject.toml + README badge,
+# collects scriv fragments into CHANGELOG.md, opens a release PR.
+# Tagging is deferred to tag-release.yaml so the tag lands on the
+# squash-merge commit on main.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Semver part to bump"
+        required: true
+        default: patch
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions: {}
+
+env:
+  BRANCH_NEW: bump-${{ github.run_number }}-${{ github.ref_name }}
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python + install dev deps (bump-my-version + scriv)
+        run: |
+          uv python install 3.12
+          uv sync --group dev
+
+      - name: Configure git + branch
+        env:
+          BRANCH: ${{ env.BRANCH_NEW }}
+        run: |
+          git config user.email "bumped@qte77.gha"
+          git config user.name "bump-my-version"
+          git checkout -b "$BRANCH"
+
+      - name: Run bump-my-version
+        id: bump
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+        run: |
+          set -euo pipefail
+          PREV_VERSION=$(uv run bump-my-version show current_version)
+          uv run bump-my-version bump --no-tag "$BUMP_TYPE"
+          NEW_VERSION=$(uv run bump-my-version show current_version)
+          {
+            echo "prev_version=$PREV_VERSION"
+            echo "new_version=$NEW_VERSION"
+            echo "bumped=true"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Collect changelog fragments
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          if ls changelog.d/*.md >/dev/null 2>&1; then
+            uv run scriv collect --version "$NEW_VERSION"
+            git add CHANGELOG.md changelog.d/
+            git commit -m "docs(changelog): collect fragments for $NEW_VERSION"
+          else
+            echo "no changelog fragments to collect"
+          fi
+
+      - name: Push branch
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          BRANCH: ${{ env.BRANCH_NEW }}
+        run: |
+          git push origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Open release PR
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: ${{ github.ref_name }}
+          HEAD_BRANCH: ${{ env.BRANCH_NEW }}
+          PREV_VERSION: ${{ steps.bump.outputs.prev_version }}
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "$HEAD_BRANCH" \
+            --title "chore(release): bump $PREV_VERSION -> $NEW_VERSION" \
+            --body "Automated bump via bump-my-version.yaml workflow_dispatch. Updates pyproject.toml, README version badge, and CHANGELOG.md. The signed \`v$NEW_VERSION\` tag is created automatically by \`tag-release.yaml\` after this PR is squash-merged to main, so the tag always points at the merge commit."
