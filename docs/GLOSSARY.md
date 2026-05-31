@@ -45,23 +45,5 @@ category: technical
 | **SBOM** | Software Bill of Materials. Produced by `sbom.yaml` (qte77/gha-sbom-action) and at release by Syft (`publish-release.yaml`). |
 | **SPDX** | [Software Package Data Exchange](https://spdx.dev/) - SBOM format we emit (`sbom.spdx.json`). |
 | **SARIF** | [Static Analysis Results Interchange Format](https://sarifweb.azurewebsites.net/) - what we upload to GitHub Code Scanning. |
-| **YAML** | YAML Ain't Markup Language - config + GHA workflow file format. |
+| **YAML** | YAML Ain't Markup Language - config + GitHub Actions workflow file format. |
 | **TOML** | Tom's Obvious Minimal Language - `pyproject.toml` config format. |
-
-## Tooling / infrastructure
-
-| Abbrev | Expansion |
-|---|---|
-| **GHA** | GitHub Actions. |
-| **SCA** | Software Composition Analysis - what `trivy.yaml` + `osv-scanner.yaml` perform on the dependency tree. |
-| **SAST** | Static Application Security Testing - what `codeql.yaml` performs on source code. |
-| **CodeQL** | GitHub's SAST query engine. |
-| **TDD** | Test-Driven Development - Red / Green / Refactor cycle. See [`AGENTS.md`](../AGENTS.md). |
-| **AHA** | Avoid Hasty Abstractions - one of our core principles alongside KISS / DRY / YAGNI. |
-| **KISS** | Keep It Simple, Stupid. |
-| **DRY** | Don't Repeat Yourself. |
-| **YAGNI** | You Aren't Gonna Need It. |
-| **MVP** | Minimum Viable Product. |
-| **PR** | Pull Request. |
-| **CI** | Continuous Integration. |
-| **CD** | Continuous Deployment. |
