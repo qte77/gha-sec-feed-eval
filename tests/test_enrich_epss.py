@@ -26,36 +26,42 @@ from gha_sec_feed_eval.models import FeedRow
 
 
 def _row(epss: float | None) -> FeedRow:
-    return FeedRow.model_validate({
-        "id": "CVE-2026-12345",
-        "source": "nvd",
-        "published": "2026-05-31T00:00:00Z",
-        "severity": "high",
-        "cvss": 8.0,
-        "epss": epss,
-        "kev": False,
-        "refs": [],
-        "schema_version": "1.0.0",
-    })
+    return FeedRow.model_validate(
+        {
+            "id": "CVE-2026-12345",
+            "source": "nvd",
+            "published": "2026-05-31T00:00:00Z",
+            "severity": "high",
+            "cvss": 8.0,
+            "epss": epss,
+            "kev": False,
+            "refs": [],
+            "schema_version": "1.0.0",
+        }
+    )
 
 
 def _fixture_response(score: float | str, cve: str = "CVE-2026-12345") -> bytes:
     """Mimic the api.first.org/data/v1/epss/?cve=... JSON envelope."""
-    return json.dumps({
-        "status": "OK",
-        "status-code": 200,
-        "version": "1.0",
-        "access": "public",
-        "total": 1,
-        "offset": 0,
-        "limit": 100,
-        "data": [{
-            "cve": cve,
-            "epss": str(score),
-            "percentile": "0.99",
-            "date": "2026-05-31",
-        }],
-    }).encode("utf-8")
+    return json.dumps(
+        {
+            "status": "OK",
+            "status-code": 200,
+            "version": "1.0",
+            "access": "public",
+            "total": 1,
+            "offset": 0,
+            "limit": 100,
+            "data": [
+                {
+                    "cve": cve,
+                    "epss": str(score),
+                    "percentile": "0.99",
+                    "date": "2026-05-31",
+                }
+            ],
+        }
+    ).encode("utf-8")
 
 
 # MARK: short-circuit on present epss
@@ -106,11 +112,14 @@ def test_resolve_epss_fetches_when_missing(monkeypatch):
         captured.append(url)
         return _fixture_response(score=0.87)
 
+    from urllib.parse import urlparse
+
     row = _row(epss=None)
     assert resolve_epss(row, http_get=_stub_get) == 0.87
     assert len(captured) == 1
-    assert "api.first.org" in captured[0]
-    assert "CVE-2026-12345" in captured[0]
+    parsed = urlparse(captured[0])
+    assert parsed.hostname == "api.first.org"
+    assert "CVE-2026-12345" in (parsed.query or "")
 
 
 def test_resolve_epss_uses_https(monkeypatch):
@@ -132,11 +141,18 @@ def test_resolve_epss_handles_empty_data_array(monkeypatch):
     """API returns 200 with empty `data` when the CVE is unknown to EPSS
     (e.g., too recent). Treat as 'no enrichment available' → None."""
     monkeypatch.delenv("GSFE_OFFLINE", raising=False)
-    payload = json.dumps({
-        "status": "OK", "status-code": 200, "version": "1.0",
-        "access": "public", "total": 0, "offset": 0, "limit": 100,
-        "data": [],
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "status": "OK",
+            "status-code": 200,
+            "version": "1.0",
+            "access": "public",
+            "total": 0,
+            "offset": 0,
+            "limit": 100,
+            "data": [],
+        }
+    ).encode("utf-8")
     row = _row(epss=None)
     assert resolve_epss(row, http_get=lambda _u: payload) is None
 
@@ -153,9 +169,13 @@ def test_resolve_epss_raises_on_malformed_response(monkeypatch):
 
 def test_resolve_epss_raises_on_non_ok_status(monkeypatch):
     monkeypatch.delenv("GSFE_OFFLINE", raising=False)
-    payload = json.dumps({
-        "status": "ERROR", "status-code": 500, "data": [],
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "status": "ERROR",
+            "status-code": 500,
+            "data": [],
+        }
+    ).encode("utf-8")
     row = _row(epss=None)
     with pytest.raises(EpssFetchError):
         resolve_epss(row, http_get=lambda _u: payload)
@@ -165,9 +185,13 @@ def test_resolve_epss_raises_on_unparseable_score(monkeypatch):
     """A non-numeric epss field in the payload is an upstream bug worth
     surfacing rather than silently coercing to 0."""
     monkeypatch.delenv("GSFE_OFFLINE", raising=False)
-    payload = json.dumps({
-        "status": "OK", "status-code": 200, "data": [{"cve": "CVE-2026-12345", "epss": "abc"}],
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "status": "OK",
+            "status-code": 200,
+            "data": [{"cve": "CVE-2026-12345", "epss": "abc"}],
+        }
+    ).encode("utf-8")
     row = _row(epss=None)
     with pytest.raises(EpssFetchError):
         resolve_epss(row, http_get=lambda _u: payload)
@@ -183,17 +207,19 @@ def test_live_resolve_epss_fetches_real_score():
     an EPSS score). Verify the score is a finite float in [0, 1]."""
     from gha_sec_feed_eval.http_client import get
 
-    row = FeedRow.model_validate({
-        "id": "CVE-2021-44228",
-        "source": "nvd",
-        "published": "2021-12-10T00:00:00Z",
-        "severity": "critical",
-        "cvss": 10.0,
-        "epss": None,
-        "kev": True,
-        "refs": [],
-        "schema_version": "1.0.0",
-    })
+    row = FeedRow.model_validate(
+        {
+            "id": "CVE-2021-44228",
+            "source": "nvd",
+            "published": "2021-12-10T00:00:00Z",
+            "severity": "critical",
+            "cvss": 10.0,
+            "epss": None,
+            "kev": True,
+            "refs": [],
+            "schema_version": "1.0.0",
+        }
+    )
     score = resolve_epss(row, http_get=get)
     assert score is not None
     assert 0.0 <= score <= 1.0
