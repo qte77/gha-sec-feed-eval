@@ -37,7 +37,10 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dev + test dependencies
-        run: uv sync --group dev --group test
+        run: uv sync --frozen --group dev --group test
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
 
       - name: Ruff lint
         run: uv run ruff check .
