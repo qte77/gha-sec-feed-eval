@@ -15,8 +15,6 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 
-import pytest
-
 from gha_sec_feed_eval.models import PriorityRow
 from gha_sec_feed_eval.writer import build_meta, write_outputs
 
@@ -71,7 +69,7 @@ def test_build_meta_counts_categories_correctly():
     )
     assert meta.total == 5
     assert meta.by_category == {"act_now": 2, "this_week": 1, "monitor": 2}
-    assert meta.by_source == {"nvd": 3, "ghsa": 2, "osv": 1}
+    assert meta.by_source == {"nvd": 2, "ghsa": 2, "osv": 1}
     assert meta.input_source == "https://example.com/feed.jsonl"
     assert meta.last_run == _NOW
 
@@ -172,7 +170,11 @@ def test_report_md_contains_three_bucket_sections(tmp_path):
         assert heading in report
 
 
-def test_report_md_shows_category_counts(tmp_path):
+def test_report_md_shows_per_bucket_counts_in_headings(tmp_path):
+    """Each bucket section heading carries the row count: with the 5-row
+    sample the splits are act_now=2, this_week=1, monitor=2. The heading
+    format itself is firmed up in Phase 2c (#4); this test fails if the
+    count is missing OR a future regression mis-buckets a row."""
     write_outputs(
         _sample_rows(),
         output_dir=tmp_path,
@@ -181,10 +183,9 @@ def test_report_md_shows_category_counts(tmp_path):
         last_run=_NOW,
     )
     report = (tmp_path / "REPORT.md").read_text(encoding="utf-8")
-    # The 2/1/2 split should be visible somewhere — exact format
-    # cemented in Phase 2c polish (#4).
-    assert "2" in report
-    assert "1" in report
+    assert "## Act-Now (2)" in report
+    assert "## This-Week (1)" in report
+    assert "## Monitor (2)" in report
 
 
 def test_report_md_contains_every_cve_id(tmp_path):
