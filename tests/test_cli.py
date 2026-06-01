@@ -43,14 +43,25 @@ def _settings(tmp_path: Path) -> AppSettings:
 # MARK: run() — orchestration end-to-end
 
 
-def test_run_produces_priority_jsonl_with_one_row_per_matching_c1_row(tmp_path):
-    """The 5-row fixture has refs hitting python/docker/github-actions
-    keywords, so all 5 should pass the filter."""
+def test_run_produces_priority_jsonl_with_realistic_filter_results(tmp_path):
+    """The 5-row fixture is intentionally realistic — only the rows with
+    refs hitting categories/default.yaml keywords pass:
+
+    * CVE-2021-44228 (Log4Shell) — `pydantic` ref → python ecosystem
+    * CVE-2024-21626 (runc) — `alpine` ref → docker ecosystem
+
+    The other 3 (CVE-2024-3094, CVE-2022-22965, CVE-2026-00001) have
+    no keyword hits and are dropped. Pinning the realistic count
+    catches both filter regressions (count drops) and accidental
+    keyword-broadening regressions (count grows).
+    """
     settings = _settings(tmp_path)
     run(settings, http_get=_stub_get_returning_fixture)
     text = (tmp_path / "priority.jsonl").read_text(encoding="utf-8")
     lines = [line for line in text.splitlines() if line.strip()]
-    assert len(lines) == 5
+    assert len(lines) == 2
+    parsed_ids = {json.loads(line)["id"] for line in lines}
+    assert parsed_ids == {"CVE-2021-44228", "CVE-2024-21626"}
 
 
 def test_run_outputs_round_trip_through_priorityrow(tmp_path):
@@ -145,9 +156,12 @@ def test_run_meta_total_matches_c2_line_count(tmp_path):
 # MARK: scoring assertions on the fixture
 
 
-def test_run_assigns_act_now_to_log4shell(tmp_path):
-    """CVE-2021-44228 (CVSS 10, KEV, source=cisa-kev → active exploit,
-    EPSS 0.97) must score Act-Now even after 4+ years of recency decay."""
+def test_log4shell_falls_into_this_week_after_recency_decay(tmp_path):
+    """CVE-2021-44228 (CVSS 10 + KEV + cisa-kev source for active-exploit
+    bump + EPSS 0.97) scores 2 + 2 + 1.94 + 0 (no recency, 4+ years
+    old) + 2 = 7.94 → this_week. The recency decay is load-bearing
+    behaviour the formula deliberately encodes; pin it so a future
+    re-tune doesn't silently collapse recency-distinguishability."""
     from gha_sec_feed_eval.models import PriorityRow
 
     settings = _settings(tmp_path)
@@ -155,7 +169,9 @@ def test_run_assigns_act_now_to_log4shell(tmp_path):
     text = (tmp_path / "priority.jsonl").read_text(encoding="utf-8")
     rows = [PriorityRow.model_validate_json(ln) for ln in text.splitlines() if ln.strip()]
     by_id = {row.id: row for row in rows}
-    assert by_id["CVE-2021-44228"].priority_category.value == "act_now"
+    log4shell = by_id["CVE-2021-44228"]
+    assert log4shell.priority_category.value == "this_week"
+    assert 7.0 < log4shell.priority_score < 8.0
 
 
 # MARK: argparse CLI
