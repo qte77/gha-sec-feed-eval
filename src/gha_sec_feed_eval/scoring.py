@@ -15,11 +15,13 @@ from gha_sec_feed_eval.models import FeedRow, PriorityCategory, Source
 # Per docs/scoring.md the heuristic flags refs hosted on these well-known
 # exploit/PoC repositories. Substring match against the URL host suffix
 # (so `www.exploit-db.com` and `exploit-db.com` both qualify).
-_EXPLOIT_HOST_SUBSTRINGS: frozenset[str] = frozenset({
-    "exploit-db.com",
-    "packetstormsecurity.com",
-    "metasploit-framework",
-})
+_EXPLOIT_HOST_SUBSTRINGS: frozenset[str] = frozenset(
+    {
+        "exploit-db.com",
+        "packetstormsecurity.com",
+        "metasploit-framework",
+    }
+)
 
 # Path-level signals — case-sensitive containment / suffix.
 _POC_PATH_SUBSTRING = "/poc/"

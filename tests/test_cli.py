@@ -79,21 +79,25 @@ def test_run_outputs_round_trip_through_priorityrow(tmp_path):
 
 def test_run_drops_rows_with_no_matched_categories(tmp_path):
     """A row whose refs match no ecosystem must not appear in C2 output."""
-    settings = _settings(tmp_path).model_copy(update={
-        "categories_file": Path("categories/default.yaml"),
-    })
+    settings = _settings(tmp_path).model_copy(
+        update={
+            "categories_file": Path("categories/default.yaml"),
+        }
+    )
     # Feed contains ONE row whose only ref is example.com (no category match).
-    no_match_payload = json.dumps({
-        "id": "CVE-9999-99999",
-        "source": "nvd",
-        "published": "2026-05-31T00:00:00Z",
-        "severity": "low",
-        "cvss": 2.0,
-        "epss": 0.001,
-        "kev": False,
-        "refs": ["https://example.com/unrelated"],
-        "schema_version": "1.0.0",
-    }).encode("utf-8")
+    no_match_payload = json.dumps(
+        {
+            "id": "CVE-9999-99999",
+            "source": "nvd",
+            "published": "2026-05-31T00:00:00Z",
+            "severity": "low",
+            "cvss": 2.0,
+            "epss": 0.001,
+            "kev": False,
+            "refs": ["https://example.com/unrelated"],
+            "schema_version": "1.0.0",
+        }
+    ).encode("utf-8")
     run(settings, http_get=lambda _u: no_match_payload)
     text = (tmp_path / "priority.jsonl").read_text(encoding="utf-8")
     assert text == ""
@@ -147,8 +151,7 @@ def test_run_meta_total_matches_c2_line_count(tmp_path):
     run(settings, http_get=_stub_get_returning_fixture)
     meta = json.loads((tmp_path / "priority-meta.json").read_text(encoding="utf-8"))
     lines = [
-        ln for ln in (tmp_path / "priority.jsonl").read_text("utf-8").splitlines()
-        if ln.strip()
+        ln for ln in (tmp_path / "priority.jsonl").read_text("utf-8").splitlines() if ln.strip()
     ]
     assert meta["total"] == len(lines)
 
@@ -184,11 +187,16 @@ def test_main_returns_0_on_success(monkeypatch, tmp_path):
         _stub_get_returning_fixture,
     )
     monkeypatch.setenv("GSFE_OFFLINE", "1")
-    rc = main([
-        "--feed-url", "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
-        "--output-dir", str(tmp_path),
-        "--categories-file", "categories/default.yaml",
-    ])
+    rc = main(
+        [
+            "--feed-url",
+            "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
+            "--output-dir",
+            str(tmp_path),
+            "--categories-file",
+            "categories/default.yaml",
+        ]
+    )
     assert rc == 0
     assert (tmp_path / "priority.jsonl").exists()
 
@@ -202,26 +210,36 @@ def test_main_overrides_feed_url_via_flag(monkeypatch, tmp_path):
 
     monkeypatch.setattr("gha_sec_feed_eval.cli.http_get", _capturing_get)
     monkeypatch.setenv("GSFE_OFFLINE", "1")
-    main([
-        "--feed-url", "https://api.github.com/feed.jsonl",
-        "--output-dir", str(tmp_path),
-    ])
+    main(
+        [
+            "--feed-url",
+            "https://api.github.com/feed.jsonl",
+            "--output-dir",
+            str(tmp_path),
+        ]
+    )
     assert captured[0] == "https://api.github.com/feed.jsonl"
 
 
 def test_main_returns_nonzero_on_schema_drift(monkeypatch, tmp_path):
     """A schema_version drift in the fetched feed must surface as a
     non-zero exit code rather than a silent empty output."""
-    bad_feed = json.dumps({
-        **json.loads(_FIXTURE_BYTES.splitlines()[0]),
-        "schema_version": "2.0.0",
-    }).encode("utf-8")
+    bad_feed = json.dumps(
+        {
+            **json.loads(_FIXTURE_BYTES.splitlines()[0]),
+            "schema_version": "2.0.0",
+        }
+    ).encode("utf-8")
     monkeypatch.setattr("gha_sec_feed_eval.cli.http_get", lambda _u: bad_feed)
     monkeypatch.setenv("GSFE_OFFLINE", "1")
-    rc = main([
-        "--feed-url", "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
-        "--output-dir", str(tmp_path),
-    ])
+    rc = main(
+        [
+            "--feed-url",
+            "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
+            "--output-dir",
+            str(tmp_path),
+        ]
+    )
     assert rc != 0
 
 
@@ -247,10 +265,14 @@ def test_main_input_file_bypasses_http_client(monkeypatch, tmp_path):
 
     monkeypatch.setattr("gha_sec_feed_eval.cli.http_get", _fail_if_called)
     monkeypatch.setenv("GSFE_OFFLINE", "1")
-    rc = main([
-        "--input-file", str(_FIXTURE_PATH),
-        "--output-dir", str(tmp_path),
-    ])
+    rc = main(
+        [
+            "--input-file",
+            str(_FIXTURE_PATH),
+            "--output-dir",
+            str(tmp_path),
+        ]
+    )
     assert rc == 0
     assert (tmp_path / "priority.jsonl").exists()
 
@@ -264,20 +286,28 @@ def test_main_input_file_records_path_as_input_source(monkeypatch, tmp_path):
         lambda _u: (_ for _ in ()).throw(AssertionError("not used")),
     )
     monkeypatch.setenv("GSFE_OFFLINE", "1")
-    main([
-        "--input-file", str(_FIXTURE_PATH),
-        "--output-dir", str(tmp_path),
-    ])
+    main(
+        [
+            "--input-file",
+            str(_FIXTURE_PATH),
+            "--output-dir",
+            str(tmp_path),
+        ]
+    )
     meta = json.loads((tmp_path / "priority-meta.json").read_text(encoding="utf-8"))
     assert meta["input_source"] == str(_FIXTURE_PATH)
 
 
 def test_main_input_file_missing_returns_nonzero(monkeypatch, tmp_path):
     monkeypatch.setenv("GSFE_OFFLINE", "1")
-    rc = main([
-        "--input-file", str(tmp_path / "does-not-exist.jsonl"),
-        "--output-dir", str(tmp_path / "out"),
-    ])
+    rc = main(
+        [
+            "--input-file",
+            str(tmp_path / "does-not-exist.jsonl"),
+            "--output-dir",
+            str(tmp_path / "out"),
+        ]
+    )
     assert rc != 0
 
 
@@ -286,8 +316,13 @@ def test_main_rejects_both_feed_url_and_input_file(monkeypatch, tmp_path):
     preferring one would mask operator confusion."""
     monkeypatch.setenv("GSFE_OFFLINE", "1")
     with pytest.raises(SystemExit):
-        main([
-            "--feed-url", "https://example.com/feed.jsonl",
-            "--input-file", str(_FIXTURE_PATH),
-            "--output-dir", str(tmp_path),
-        ])
+        main(
+            [
+                "--feed-url",
+                "https://example.com/feed.jsonl",
+                "--input-file",
+                str(_FIXTURE_PATH),
+                "--output-dir",
+                str(tmp_path),
+            ]
+        )

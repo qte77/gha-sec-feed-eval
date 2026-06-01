@@ -43,10 +43,7 @@ def load_attack_mapping(path: str | Path) -> AttackMapping:
     try:
         text = p.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
-        msg = (
-            f"vendored ATT&CK data missing at {p}; "
-            f"refresh per docs/refresh-vendored-data.md"
-        )
+        msg = f"vendored ATT&CK data missing at {p}; refresh per docs/refresh-vendored-data.md"
         raise VendoredDataError(msg) from exc
 
     try:

@@ -30,13 +30,15 @@ from gha_sec_feed_eval.http_client import (
     get,
 )
 
-_EXPECTED_HOSTS = frozenset({
-    "raw.githubusercontent.com",
-    "api.github.com",
-    "attack.mitre.org",
-    "d3fend.mitre.org",
-    "api.first.org",
-})
+_EXPECTED_HOSTS = frozenset(
+    {
+        "raw.githubusercontent.com",
+        "api.github.com",
+        "attack.mitre.org",
+        "d3fend.mitre.org",
+        "api.first.org",
+    }
+)
 
 
 class _FakeResponse:
@@ -152,9 +154,7 @@ def test_offline_mode_error_is_http_client_error_subclass():
 
 
 @pytest.mark.parametrize("truthy", ["1", "true", "TRUE", "yes"])
-def test_offline_mode_treats_common_truthy_values_as_enabled(
-    truthy: str, monkeypatch
-):
+def test_offline_mode_treats_common_truthy_values_as_enabled(truthy: str, monkeypatch):
     """Tolerant of human-typed truthy values so an operator setting
     `GSFE_OFFLINE=true` for clarity doesn't accidentally hit the
     network."""
@@ -164,9 +164,7 @@ def test_offline_mode_treats_common_truthy_values_as_enabled(
 
 
 @pytest.mark.parametrize("falsy", ["0", "false", "", "no"])
-def test_offline_mode_treats_falsy_values_as_disabled(
-    falsy: str, monkeypatch
-):
+def test_offline_mode_treats_falsy_values_as_disabled(falsy: str, monkeypatch):
     monkeypatch.setenv("GSFE_OFFLINE", falsy)
     body = get("https://api.github.com/foo", opener=_fake_opener)
     assert body == b"sample body"

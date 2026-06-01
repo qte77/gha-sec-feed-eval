@@ -91,16 +91,10 @@ def _render_bucket_section(title: str, rows: list[PriorityRow]) -> str:
 
 def _render_report(rows: list[PriorityRow], meta: Meta) -> str:
     buckets = _bucket_rows(rows)
-    frontmatter = (
-        "---\n"
-        "title: Priority Report\n"
-        f"updated: {meta.last_run.isoformat()}\n"
-        "---\n\n"
-    )
+    frontmatter = f"---\ntitle: Priority Report\nupdated: {meta.last_run.isoformat()}\n---\n\n"
     sections = [
         f"# Priority Report ({meta.total} total)\n",
-        f"Input: `{meta.input_source}` · "
-        f"Categories: `{meta.categories_used}`\n",
+        f"Input: `{meta.input_source}` · Categories: `{meta.categories_used}`\n",
         _render_bucket_section("Act-Now", buckets["act_now"]),
         _render_bucket_section("This-Week", buckets["this_week"]),
         _render_bucket_section("Monitor", buckets["monitor"]),

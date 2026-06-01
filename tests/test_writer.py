@@ -28,22 +28,24 @@ def _priority(
     category: str = "act_now",
     source: str = "nvd",
 ) -> PriorityRow:
-    return PriorityRow.model_validate({
-        "id": cve_id,
-        "source": source,
-        "published": "2026-05-31T00:00:00Z",
-        "severity": "critical",
-        "cvss": 9.8,
-        "epss": 0.87,
-        "kev": True,
-        "refs": [f"https://nvd.nist.gov/vuln/detail/{cve_id}"],
-        "priority_score": score,
-        "priority_category": category,
-        "attack_techniques": ["T1190"],
-        "d3fend_countermeasures": ["D3-NTA"],
-        "matched_categories": ["python"],
-        "schema_version": "1.0.0",
-    })
+    return PriorityRow.model_validate(
+        {
+            "id": cve_id,
+            "source": source,
+            "published": "2026-05-31T00:00:00Z",
+            "severity": "critical",
+            "cvss": 9.8,
+            "epss": 0.87,
+            "kev": True,
+            "refs": [f"https://nvd.nist.gov/vuln/detail/{cve_id}"],
+            "priority_score": score,
+            "priority_category": category,
+            "attack_techniques": ["T1190"],
+            "d3fend_countermeasures": ["D3-NTA"],
+            "matched_categories": ["python"],
+            "schema_version": "1.0.0",
+        }
+    )
 
 
 def _sample_rows() -> list[PriorityRow]:

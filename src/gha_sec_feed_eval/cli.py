@@ -45,15 +45,17 @@ def _enrich_row(
                 countermeasures.append(cm)
     score_row = row.model_copy(update={"epss": epss})
     score = priority_score(score_row, now=now)
-    return PriorityRow.model_validate({
-        **row.model_dump(mode="json"),
-        "epss": epss,
-        "priority_score": score,
-        "priority_category": priority_category(score).value,
-        "attack_techniques": techniques,
-        "d3fend_countermeasures": countermeasures,
-        "matched_categories": matches,
-    })
+    return PriorityRow.model_validate(
+        {
+            **row.model_dump(mode="json"),
+            "epss": epss,
+            "priority_score": score,
+            "priority_category": priority_category(score).value,
+            "attack_techniques": techniques,
+            "d3fend_countermeasures": countermeasures,
+            "matched_categories": matches,
+        }
+    )
 
 
 def run(
@@ -89,8 +91,12 @@ def run(
         epss = resolve_epss(row, http_get=http_get)
         output.append(
             _enrich_row(
-                row, matches=matches, attack=attack, d3fend=d3fend,
-                epss=epss, now=now,
+                row,
+                matches=matches,
+                attack=attack,
+                d3fend=d3fend,
+                epss=epss,
+                now=now,
             )
         )
 

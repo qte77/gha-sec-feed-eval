@@ -24,13 +24,15 @@ if TYPE_CHECKING:
 
 # Brief-mandated allowlist. Adding a 6th host requires a documented
 # brief deviation.
-_ALLOWED_HOSTS: frozenset[str] = frozenset({
-    "raw.githubusercontent.com",
-    "api.github.com",
-    "attack.mitre.org",
-    "d3fend.mitre.org",
-    "api.first.org",
-})
+_ALLOWED_HOSTS: frozenset[str] = frozenset(
+    {
+        "raw.githubusercontent.com",
+        "api.github.com",
+        "attack.mitre.org",
+        "d3fend.mitre.org",
+        "api.first.org",
+    }
+)
 
 _OFFLINE_ENV_VAR = "GSFE_OFFLINE"
 _OFFLINE_TRUTHY = frozenset({"1", "true", "yes"})

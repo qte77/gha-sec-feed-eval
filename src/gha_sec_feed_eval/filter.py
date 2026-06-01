@@ -57,8 +57,6 @@ def matched_categories(row: FeedRow, config: CategoriesConfig) -> list[str]:
     haystacks = [ref.lower() for ref in row.refs]
     matches: list[str] = []
     for slug, keywords in config.stack_keywords.items():
-        if any(
-            _keyword_matches(kw, hay) for kw in keywords for hay in haystacks
-        ):
+        if any(_keyword_matches(kw, hay) for kw in keywords for hay in haystacks):
             matches.append(slug)
     return matches

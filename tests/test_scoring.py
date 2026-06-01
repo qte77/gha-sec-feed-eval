@@ -122,13 +122,9 @@ def test_epss_null_contributes_0():
     ("days_old", "expected_recency"),
     [(0, 2.0), (1, 2.0 - 2.0 / 7), (3, 2.0 - 6.0 / 7), (7, 0.0), (14, 0.0)],
 )
-def test_recency_decays_linearly_over_7_days_then_floors(
-    days_old: int, expected_recency: float
-):
+def test_recency_decays_linearly_over_7_days_then_floors(days_old: int, expected_recency: float):
     published = NOW - timedelta(days=days_old)
-    row = _row(
-        published=published.isoformat(), kev=False, epss=0.0, cvss=0.0
-    )
+    row = _row(published=published.isoformat(), kev=False, epss=0.0, cvss=0.0)
     assert priority_score(row, now=NOW) == pytest.approx(expected_recency, abs=0.01)
 
 
@@ -152,9 +148,14 @@ def test_future_published_treated_as_fresh():
 
 def test_score_clamps_to_10():
     """Sum of all bumps would be 10 even before any future tweaks; verify cap."""
-    row = _row(cvss=10.0, kev=True, epss=1.0, source="cisa-kev",
-               published=NOW.isoformat(),
-               refs=["https://exploit-db.com/exploits/42"])
+    row = _row(
+        cvss=10.0,
+        kev=True,
+        epss=1.0,
+        source="cisa-kev",
+        published=NOW.isoformat(),
+        refs=["https://exploit-db.com/exploits/42"],
+    )
     assert priority_score(row, now=NOW) <= 10.0
 
 
@@ -224,12 +225,10 @@ def test_no_active_exploit_for_empty_refs():
 
 def test_active_exploit_contributes_2_points():
     row_exploit = _row(
-        source="cisa-kev", kev=False, cvss=0.0, epss=0.0,
-        published=NOW.isoformat(), refs=[]
+        source="cisa-kev", kev=False, cvss=0.0, epss=0.0, published=NOW.isoformat(), refs=[]
     )
     row_no_exploit = _row(
-        source="nvd", kev=False, cvss=0.0, epss=0.0,
-        published=NOW.isoformat(), refs=[]
+        source="nvd", kev=False, cvss=0.0, epss=0.0, published=NOW.isoformat(), refs=[]
     )
     delta = priority_score(row_exploit, now=NOW) - priority_score(row_no_exploit, now=NOW)
     assert delta == pytest.approx(2.0, abs=0.01)
@@ -256,13 +255,15 @@ def test_priority_category_thresholds(score: float, expected: PriorityCategory):
 # MARK: property tests
 
 
-def _hypothesis_row(
-    cvss: float | None, epss: float | None, kev: bool, days_old: int
-) -> FeedRow:
+def _hypothesis_row(cvss: float | None, epss: float | None, kev: bool, days_old: int) -> FeedRow:
     published = NOW - timedelta(days=days_old)
     return _row(
-        cvss=cvss, epss=epss, kev=kev, published=published.isoformat(),
-        source="nvd", refs=[],
+        cvss=cvss,
+        epss=epss,
+        kev=kev,
+        published=published.isoformat(),
+        source="nvd",
+        refs=[],
     )
 
 
@@ -272,9 +273,7 @@ def _hypothesis_row(
     epss=st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0)),
     days_old=st.integers(min_value=0, max_value=365),
 )
-def test_property_score_always_in_0_to_10(
-    cvss: float | None, epss: float | None, days_old: int
-):
+def test_property_score_always_in_0_to_10(cvss: float | None, epss: float | None, days_old: int):
     """For any valid input combo, the score never exceeds [0, 10]."""
     row_kev = _hypothesis_row(cvss=cvss, epss=epss, kev=True, days_old=days_old)
     row_no_kev = _hypothesis_row(cvss=cvss, epss=epss, kev=False, days_old=days_old)
@@ -288,9 +287,7 @@ def test_property_score_always_in_0_to_10(
     epss=st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0)),
     days_old=st.integers(min_value=0, max_value=365),
 )
-def test_property_kev_never_decreases_score(
-    cvss: float | None, epss: float | None, days_old: int
-):
+def test_property_kev_never_decreases_score(cvss: float | None, epss: float | None, days_old: int):
     """Monotonicity: setting kev=True can only raise the score (or equal,
     after the clamp at 10)."""
     row_no_kev = _hypothesis_row(cvss=cvss, epss=epss, kev=False, days_old=days_old)

@@ -40,10 +40,7 @@ def load_d3fend_mapping(path: str | Path) -> D3fendMapping:
     try:
         text = p.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
-        msg = (
-            f"vendored D3FEND data missing at {p}; "
-            f"refresh per docs/refresh-vendored-data.md"
-        )
+        msg = f"vendored D3FEND data missing at {p}; refresh per docs/refresh-vendored-data.md"
         raise VendoredDataError(msg) from exc
 
     try:

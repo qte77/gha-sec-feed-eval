@@ -23,36 +23,39 @@ from pydantic import ValidationError
 from gha_sec_feed_eval.filter import CategoriesConfig, load_categories, matched_categories
 from gha_sec_feed_eval.models import FeedRow
 
-
 # -- helpers ----------------------------------------------------------------
 
 
 def _row(refs: list[str]) -> FeedRow:
-    return FeedRow.model_validate({
-        "id": "CVE-2026-12345",
-        "source": "nvd",
-        "published": "2026-05-31T00:00:00Z",
-        "severity": "high",
-        "cvss": 8.0,
-        "epss": 0.1,
-        "kev": False,
-        "refs": refs,
-        "schema_version": "1.0.0",
-    })
+    return FeedRow.model_validate(
+        {
+            "id": "CVE-2026-12345",
+            "source": "nvd",
+            "published": "2026-05-31T00:00:00Z",
+            "severity": "high",
+            "cvss": 8.0,
+            "epss": 0.1,
+            "kev": False,
+            "refs": refs,
+            "schema_version": "1.0.0",
+        }
+    )
 
 
 # Minimal config used by most tests — avoids depending on the shipped
 # categories/default.yaml so a default-categories rename doesn't ripple
 # into 30 unrelated tests.
-_MINIMAL_CONFIG = CategoriesConfig.model_validate({
-    "stack_keywords": {
-        "python": ["pip", "fastapi", "pydantic"],
-        "typescript": ["npm", "react", "@typescript-eslint/*"],
-        "github-actions": ["actions/checkout"],
-    },
-    "priority_thresholds": {"act_now": 8.0, "this_week": 5.0},
-    "match_strategy": "keyword-in-refs-or-affected-products",
-})
+_MINIMAL_CONFIG = CategoriesConfig.model_validate(
+    {
+        "stack_keywords": {
+            "python": ["pip", "fastapi", "pydantic"],
+            "typescript": ["npm", "react", "@typescript-eslint/*"],
+            "github-actions": ["actions/checkout"],
+        },
+        "priority_thresholds": {"act_now": 8.0, "this_week": 5.0},
+        "match_strategy": "keyword-in-refs-or-affected-products",
+    }
+)
 
 
 # MARK: config loading
@@ -91,21 +94,25 @@ def test_load_categories_raises_on_missing_file(tmp_path):
 )
 def test_categories_config_rejects_unknown_match_strategy(bad_strategy: str):
     with pytest.raises(ValidationError):
-        CategoriesConfig.model_validate({
-            "stack_keywords": {"python": ["pip"]},
-            "priority_thresholds": {"act_now": 8.0, "this_week": 5.0},
-            "match_strategy": bad_strategy,
-        })
+        CategoriesConfig.model_validate(
+            {
+                "stack_keywords": {"python": ["pip"]},
+                "priority_thresholds": {"act_now": 8.0, "this_week": 5.0},
+                "match_strategy": bad_strategy,
+            }
+        )
 
 
 def test_categories_config_rejects_empty_stack_keywords():
     """An empty stack_keywords map matches nothing — likely a config error."""
     with pytest.raises(ValidationError):
-        CategoriesConfig.model_validate({
-            "stack_keywords": {},
-            "priority_thresholds": {"act_now": 8.0, "this_week": 5.0},
-            "match_strategy": "keyword-in-refs-or-affected-products",
-        })
+        CategoriesConfig.model_validate(
+            {
+                "stack_keywords": {},
+                "priority_thresholds": {"act_now": 8.0, "this_week": 5.0},
+                "match_strategy": "keyword-in-refs-or-affected-products",
+            }
+        )
 
 
 # MARK: matching — basics
@@ -136,10 +143,12 @@ def test_multiple_ecosystems_match_in_same_ref():
 
 
 def test_advisory_with_no_keywords_matches_nothing():
-    row = _row(refs=[
-        "https://nvd.nist.gov/vuln/detail/CVE-2026-12345",
-        "https://www.cve.org/CVERecord?id=CVE-2026-12345",
-    ])
+    row = _row(
+        refs=[
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-12345",
+            "https://www.cve.org/CVERecord?id=CVE-2026-12345",
+        ]
+    )
     assert matched_categories(row, _MINIMAL_CONFIG) == []
 
 
@@ -156,7 +165,11 @@ def test_each_ecosystem_appears_at_most_once_per_row():
 
 def test_wildcard_keyword_matches_prefix():
     """`@typescript-eslint/*` matches `@typescript-eslint/parser`."""
-    row = _row(refs=["https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/@typescript-eslint/parser/README.md"])
+    row = _row(
+        refs=[
+            "https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/@typescript-eslint/parser/README.md"
+        ]
+    )
     assert "typescript" in matched_categories(row, _MINIMAL_CONFIG)
 
 
@@ -172,10 +185,12 @@ def test_wildcard_keyword_does_not_match_without_prefix():
 def test_matched_categories_is_idempotent():
     """Calling matched_categories twice on the same row yields the same
     set of slugs (no hidden state, no list-order drift)."""
-    row = _row(refs=[
-        "https://pypi.org/pydantic",
-        "https://github.com/actions/checkout",
-    ])
+    row = _row(
+        refs=[
+            "https://pypi.org/pydantic",
+            "https://github.com/actions/checkout",
+        ]
+    )
     first = matched_categories(row, _MINIMAL_CONFIG)
     second = matched_categories(row, _MINIMAL_CONFIG)
     assert sorted(first) == sorted(second)

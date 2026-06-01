@@ -20,9 +20,7 @@ class AppSettings(BaseSettings):
         extra="ignore",
     )
 
-    feed_url: str = (
-        "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl"
-    )
+    feed_url: str = "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl"
     data_dir: Path = Path("./data")
     categories_file: Path = Path("categories/default.yaml")
     attack_data_path: Path = Path("./vendor/attack-stix.json")
