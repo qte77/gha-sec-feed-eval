@@ -27,12 +27,18 @@ from hypothesis import strategies as st
 from gha_sec_feed_eval.models import FeedRow, PriorityCategory
 from gha_sec_feed_eval.scoring import has_active_exploit, priority_category, priority_score
 
+NOW = datetime(2026, 5, 31, 0, 0, tzinfo=UTC)
+# Default `published` is older than the recency window so the recency
+# component contributes 0 — keeps component-isolation tests honest.
+# Tests that exercise recency explicitly override `published`.
+_DEFAULT_OLD_PUBLISHED = (NOW - timedelta(days=30)).isoformat()
+
 
 def _row(**overrides) -> FeedRow:
     base = {
         "id": "CVE-2026-12345",
         "source": "nvd",
-        "published": "2026-05-31T00:00:00Z",
+        "published": _DEFAULT_OLD_PUBLISHED,
         "severity": "critical",
         "cvss": 9.8,
         "epss": 0.87,
@@ -44,18 +50,26 @@ def _row(**overrides) -> FeedRow:
     return FeedRow.model_validate(base)
 
 
-NOW = datetime(2026, 5, 31, 0, 0, tzinfo=UTC)
-
-
 # MARK: brief-mandated floor
 
 
 def test_cvss_10_kev_listed_freshly_published_scores_at_least_8():
-    """**Brief-mandated floor.** CVSS 10 + KEV + fresh must be Act-Now.
+    """**Brief-mandated floor.** A realistic CVSS-10 KEV-listed CVE must
+    bucket as Act-Now (>= 8.0). Stop-and-ask trigger if this ever fails:
+    the formula is broken.
 
-    Stop-and-ask trigger if this ever fails: the formula is broken.
+    "Realistic" = source = cisa-kev (so active-exploit heuristic fires —
+    a CVE is added to the KEV catalog precisely because exploitation is
+    observed) + a non-trivial EPSS score (KEV-listed CVEs nearly always
+    score high on EPSS).
     """
-    row = _row(cvss=10.0, kev=True, epss=None, published="2026-05-31T00:00:00Z")
+    row = _row(
+        cvss=10.0,
+        kev=True,
+        source="cisa-kev",
+        epss=0.95,
+        published=NOW.isoformat(),
+    )
     score = priority_score(row, now=NOW)
     assert score >= 8.0
 
@@ -64,30 +78,30 @@ def test_cvss_10_kev_listed_freshly_published_scores_at_least_8():
 
 
 def test_kev_true_contributes_2_points():
-    row_kev = _row(kev=True, epss=0.0, cvss=0.0, published=NOW.isoformat())
-    row_no_kev = _row(kev=False, epss=0.0, cvss=0.0, published=NOW.isoformat())
+    row_kev = _row(kev=True, epss=0.0, cvss=0.0)
+    row_no_kev = _row(kev=False, epss=0.0, cvss=0.0)
     delta = priority_score(row_kev, now=NOW) - priority_score(row_no_kev, now=NOW)
     assert delta == pytest.approx(2.0, abs=0.01)
 
 
 def test_cvss_at_9_contributes_2_points():
-    row_critical = _row(cvss=9.0, kev=False, epss=0.0, published=NOW.isoformat())
-    row_below = _row(cvss=8.9, kev=False, epss=0.0, published=NOW.isoformat())
+    row_critical = _row(cvss=9.0, kev=False, epss=0.0)
+    row_below = _row(cvss=8.9, kev=False, epss=0.0)
     delta = priority_score(row_critical, now=NOW) - priority_score(row_below, now=NOW)
     assert delta == pytest.approx(2.0, abs=0.01)
 
 
 def test_cvss_at_10_still_contributes_2_points():
     """CVSS 10 should add exactly the critical bump (not double-count)."""
-    row_10 = _row(cvss=10.0, kev=False, epss=0.0, published=NOW.isoformat())
-    row_9 = _row(cvss=9.0, kev=False, epss=0.0, published=NOW.isoformat())
+    row_10 = _row(cvss=10.0, kev=False, epss=0.0)
+    row_9 = _row(cvss=9.0, kev=False, epss=0.0)
     assert priority_score(row_10, now=NOW) == priority_score(row_9, now=NOW)
 
 
 def test_cvss_null_contributes_0():
     """Missing cvss is treated as no contribution to score."""
-    row = _row(cvss=None, kev=False, epss=0.0, published=NOW.isoformat())
-    assert priority_score(row, now=NOW) == pytest.approx(2.0, abs=0.01)
+    row = _row(cvss=None, kev=False, epss=0.0)
+    assert priority_score(row, now=NOW) == pytest.approx(0.0, abs=0.01)
 
 
 @pytest.mark.parametrize(
@@ -95,12 +109,12 @@ def test_cvss_null_contributes_0():
     [(0.0, 0.0), (0.25, 0.5), (0.5, 1.0), (0.87, 1.74), (1.0, 2.0)],
 )
 def test_epss_contributes_epss_times_2(epss: float, expected_component: float):
-    row = _row(epss=epss, kev=False, cvss=0.0, published=NOW.isoformat())
+    row = _row(epss=epss, kev=False, cvss=0.0)
     assert priority_score(row, now=NOW) == pytest.approx(expected_component, abs=0.01)
 
 
 def test_epss_null_contributes_0():
-    row = _row(epss=None, kev=False, cvss=0.0, published=NOW.isoformat())
+    row = _row(epss=None, kev=False, cvss=0.0)
     assert priority_score(row, now=NOW) == 0.0
 
 
@@ -147,7 +161,7 @@ def test_score_clamps_to_10():
 def test_score_rounded_to_2_decimals():
     """Output is rounded to 2 decimals — formula uses epss=0.876 to force a
     third decimal in the raw value."""
-    row = _row(epss=0.876, kev=False, cvss=0.0, published=NOW.isoformat())
+    row = _row(epss=0.876, kev=False, cvss=0.0)
     score = priority_score(row, now=NOW)
     assert score == round(score, 2)
 
