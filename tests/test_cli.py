@@ -232,3 +232,62 @@ def test_main_help_does_not_crash(capsys):
     assert excinfo.value.code == 0
     captured = capsys.readouterr()
     assert "feed-url" in captured.out
+
+
+# MARK: --input-file (local-fixture path bypassing http_client)
+
+
+def test_main_input_file_bypasses_http_client(monkeypatch, tmp_path):
+    """`--input-file PATH` reads a local fixture instead of calling
+    http_client. Required for `make smoke` to work without the producer
+    ship (#6) and without a separate fixture-server harness."""
+
+    def _fail_if_called(_url):
+        raise AssertionError("http_get must not be called when --input-file is set")
+
+    monkeypatch.setattr("gha_sec_feed_eval.cli.http_get", _fail_if_called)
+    monkeypatch.setenv("GSFE_OFFLINE", "1")
+    rc = main([
+        "--input-file", str(_FIXTURE_PATH),
+        "--output-dir", str(tmp_path),
+    ])
+    assert rc == 0
+    assert (tmp_path / "priority.jsonl").exists()
+
+
+def test_main_input_file_records_path_as_input_source(monkeypatch, tmp_path):
+    """priority-meta.json's input_source field must reflect the actual
+    input — the local file path, not the default feed URL — so audit
+    trails are accurate."""
+    monkeypatch.setattr(
+        "gha_sec_feed_eval.cli.http_get",
+        lambda _u: (_ for _ in ()).throw(AssertionError("not used")),
+    )
+    monkeypatch.setenv("GSFE_OFFLINE", "1")
+    main([
+        "--input-file", str(_FIXTURE_PATH),
+        "--output-dir", str(tmp_path),
+    ])
+    meta = json.loads((tmp_path / "priority-meta.json").read_text(encoding="utf-8"))
+    assert meta["input_source"] == str(_FIXTURE_PATH)
+
+
+def test_main_input_file_missing_returns_nonzero(monkeypatch, tmp_path):
+    monkeypatch.setenv("GSFE_OFFLINE", "1")
+    rc = main([
+        "--input-file", str(tmp_path / "does-not-exist.jsonl"),
+        "--output-dir", str(tmp_path / "out"),
+    ])
+    assert rc != 0
+
+
+def test_main_rejects_both_feed_url_and_input_file(monkeypatch, tmp_path):
+    """--feed-url and --input-file are mutually exclusive — silently
+    preferring one would mask operator confusion."""
+    monkeypatch.setenv("GSFE_OFFLINE", "1")
+    with pytest.raises(SystemExit):
+        main([
+            "--feed-url", "https://example.com/feed.jsonl",
+            "--input-file", str(_FIXTURE_PATH),
+            "--output-dir", str(tmp_path),
+        ])

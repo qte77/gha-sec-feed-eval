@@ -55,4 +55,4 @@ jobs:
             --ignore 'changelog.d/**'
 
       - name: Pytest with coverage
-        run: uv run pytest --cov=src --cov-fail-under=0
+        run: uv run pytest --cov=src --cov-fail-under=70

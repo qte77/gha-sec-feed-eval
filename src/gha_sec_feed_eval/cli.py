@@ -60,9 +60,20 @@ def run(
     settings: AppSettings,
     *,
     http_get: Callable[[str], bytes],
+    input_file: Path | None = None,
 ) -> None:
-    """Execute the C1 → C2 pipeline using `settings` + injected fetcher."""
-    feed_bytes = http_get(settings.feed_url)
+    """Execute the C1 → C2 pipeline using `settings` + injected fetcher.
+
+    When `input_file` is provided, the C1 feed is read from disk instead
+    of fetched via `http_get`. The local-fixture path is used by
+    `make smoke` so the dev loop doesn't require a live producer (see #6).
+    """
+    if input_file is not None:
+        feed_bytes = input_file.read_bytes()
+        input_source = str(input_file)
+    else:
+        feed_bytes = http_get(settings.feed_url)
+        input_source = settings.feed_url
     rows = parse_feed(feed_bytes.decode("utf-8"))
 
     categories = load_categories(settings.categories_file)
@@ -86,7 +97,7 @@ def run(
     write_outputs(
         output,
         output_dir=settings.data_dir,
-        input_source=settings.feed_url,
+        input_source=input_source,
         categories_used=str(settings.categories_file),
         last_run=now,
     )
@@ -97,7 +108,16 @@ def _build_argparser() -> argparse.ArgumentParser:
         prog="gha_sec_feed_eval",
         description="Evaluate a gha-sec-feed C1 JSONL feed.",
     )
-    p.add_argument("--feed-url", help="C1 source URL (overrides GSFE_FEED_URL)")
+    # `--feed-url` (HTTP-fetched) vs `--input-file` (read locally) are
+    # mutually exclusive — silently preferring one would hide operator
+    # confusion.
+    source = p.add_mutually_exclusive_group()
+    source.add_argument("--feed-url", help="C1 source URL (overrides GSFE_FEED_URL)")
+    source.add_argument(
+        "--input-file",
+        type=Path,
+        help="Read C1 JSONL from a local file instead of fetching (local dev / `make smoke`)",
+    )
     p.add_argument(
         "--output-dir",
         type=Path,
@@ -127,8 +147,11 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_argparser().parse_args(argv)
     settings = _settings_from_args(args)
     try:
-        run(settings, http_get=http_get)
+        run(settings, http_get=http_get, input_file=args.input_file)
     except LoaderError as exc:
         print(f"error: feed loader failed: {exc}", file=sys.stderr)
+        return 2
+    except FileNotFoundError as exc:
+        print(f"error: input file not found: {exc}", file=sys.stderr)
         return 2
     return 0
