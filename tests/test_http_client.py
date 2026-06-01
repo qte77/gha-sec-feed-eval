@@ -23,13 +23,12 @@ import pytest
 
 from gha_sec_feed_eval.http_client import (
     _ALLOWED_HOSTS,
+    HostNotAllowedError,
     HttpClientError,
     OfflineModeError,
     SchemeNotAllowedError,
-    HostNotAllowedError,
     get,
 )
-
 
 _EXPECTED_HOSTS = frozenset({
     "raw.githubusercontent.com",
@@ -56,7 +55,8 @@ class _FakeResponse:
         pass
 
 
-def _fake_opener(_request, timeout: float = 30) -> _FakeResponse:  # noqa: ARG001
+def _fake_opener(_request, timeout: float = 30) -> _FakeResponse:
+    _ = timeout  # signature parity with urlopen
     return _FakeResponse(b"sample body")
 
 
