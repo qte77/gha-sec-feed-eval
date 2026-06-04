@@ -1,0 +1,97 @@
+---
+# Reusable evaluator workflow — consumers call this from their own
+# scheduled workflows. See docs/consumer-guide.md (lands in 2d) for
+# the integration recipe.
+name: sec-eval
+
+on:
+  workflow_call:
+    inputs:
+      feed_url:
+        type: string
+        required: false
+        default: "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl"
+      categories_file:
+        type: string
+        required: false
+        default: ""
+      output_dir:
+        type: string
+        required: false
+        default: "./data"
+      eval_ref:
+        # REQUIRED. Must match the caller's `uses: qte77/gha-sec-feed-eval/.github/workflows/eval.yaml@<REF>`
+        # exactly. Do NOT derive from `github.workflow_ref` — under a reusable workflow that variable
+        # resolves to the CALLER's ref, not ours, which leads to a stale self-checkout (load-bearing
+        # lesson from qte77/gha-rxiv-paper-eval v0.2.1).
+        type: string
+        required: true
+    outputs:
+      relevant_count:
+        value: ${{ jobs.eval.outputs.relevant_count }}
+      priority_artifact:
+        value: ${{ jobs.eval.outputs.priority_artifact }}
+
+permissions: {}
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      relevant_count: ${{ steps.outputs.outputs.relevant_count }}
+      priority_artifact: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411  # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Check out gha-sec-feed-eval at the caller-pinned ref
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: qte77/gha-sec-feed-eval
+          ref: ${{ inputs.eval_ref }}
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install runtime dependencies
+        run: uv sync --no-dev
+
+      - name: Run evaluator
+        id: run
+        env:
+          FEED_URL: ${{ inputs.feed_url }}
+          CATEGORIES_FILE: ${{ inputs.categories_file }}
+          OUTPUT_DIR: ${{ inputs.output_dir }}
+        run: |
+          set -euo pipefail
+          args=(--feed-url "$FEED_URL" --output-dir "$OUTPUT_DIR")
+          if [ -n "$CATEGORIES_FILE" ]; then
+            args+=(--categories-file "$CATEGORIES_FILE")
+          fi
+          uv run python -m gha_sec_feed_eval "${args[@]}"
+
+      - name: Emit cross-reusable outputs
+        id: outputs
+        env:
+          OUTPUT_DIR: ${{ inputs.output_dir }}
+        run: |
+          set -euo pipefail
+          count=$(wc -l < "$OUTPUT_DIR/priority.jsonl" 2>/dev/null || echo 0)
+          echo "relevant_count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Upload priority-output artifact
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v6.1.0
+        with:
+          name: priority-output
+          path: ${{ inputs.output_dir }}/
+          if-no-files-found: error

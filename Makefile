@@ -97,10 +97,10 @@ validate:  ## CI gate: lint + check_types + check_complexity + lint_md + lint_li
 # MARK: RUN
 
 
-smoke:  ## End-to-end CLI run against tests/fixtures/feed-min.jsonl (fixture lands in 2b)
+smoke:  ## End-to-end CLI run against tests/fixtures/feed-min.jsonl (offline fixture)
 	echo "--- smoke"
-	uv run python -m gha_sec_feed_eval \
-	  --feed-url file://$(CURDIR)/tests/fixtures/feed-min.jsonl \
+	GSFE_OFFLINE=1 uv run python -m gha_sec_feed_eval \
+	  --input-file $(CURDIR)/tests/fixtures/feed-min.jsonl \
 	  --output-dir $(CURDIR)/data
 
 

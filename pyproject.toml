@@ -104,6 +104,7 @@ exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
 
 # Atomic version bumping. [project].version is the single source of

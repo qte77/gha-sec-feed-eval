@@ -1,0 +1,37 @@
+---
+# Manual-trigger wrapper around eval.yaml — exercises the reusable
+# workflow against an ad-hoc feed URL + categories override for testing
+# in this repo. Real consumer integrations call eval.yaml directly.
+name: sec-eval (dispatch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      feed_url:
+        description: "C1 feed URL (default = gha-sec-feed main)"
+        type: string
+        required: false
+        default: "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl"
+      categories_file:
+        description: "Categories override YAML (empty = defaults)"
+        type: string
+        required: false
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: eval-dispatch-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  call_eval:
+    uses: ./.github/workflows/eval.yaml
+    with:
+      # `inputs.feed_url` / `inputs.categories_file` are strings; pass through
+      # verbatim. Booleans/numbers should be wrapped in `fromJSON()` per the
+      # rxiv-paper-eval load-bearing pattern, but we have neither here.
+      feed_url: ${{ inputs.feed_url }}
+      categories_file: ${{ inputs.categories_file }}
+      output_dir: "./data"
+      eval_ref: ${{ github.ref_name }}

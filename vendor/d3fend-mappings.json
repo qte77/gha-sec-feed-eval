@@ -1,0 +1,15 @@
+{
+  "version": "D3FEND v0.18 (subset)",
+  "generated_at": "2026-06-01T00:00:00Z",
+  "mappings": {
+    "T1190": ["D3-NTA", "D3-WAFC", "D3-IRA"],
+    "T1059": ["D3-PSA", "D3-DCEV"],
+    "T1078.004": ["D3-MFA", "D3-AL"],
+    "T1187": ["D3-IPCT", "D3-NTA"],
+    "T1195.001": ["D3-CD", "D3-EAL"],
+    "T1203": ["D3-HSE", "D3-ASLR"],
+    "T1505.003": ["D3-FIM", "D3-LAM"],
+    "T1611": ["D3-CHN", "D3-PSA"],
+    "T1068": ["D3-EAL", "D3-PSA"]
+  }
+}
