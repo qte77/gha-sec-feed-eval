@@ -23,6 +23,22 @@ if TYPE_CHECKING:
 _PRIORITY_JSONL = "priority.jsonl"
 _PRIORITY_META = "priority-meta.json"
 _REPORT_MD = "REPORT.md"
+_MAX_ROWS_PER_BUCKET = 50
+
+# Canonical ATT&CK technique names — mirrors the IDs present in vendor/attack-stix.json.
+# Keep this in lockstep with the vendored mappings: refresh runbook
+# (docs/refresh-vendored-data.md) covers the procedure.
+_TECHNIQUE_NAMES: dict[str, str] = {
+    "T1190": "Exploit Public-Facing Application",
+    "T1078.004": "Valid Accounts: Cloud Accounts",
+    "T1059": "Command and Scripting Interpreter",
+    "T1203": "Exploitation for Client Execution",
+    "T1195.001": "Supply Chain Compromise: Compromise Software Dependencies and Development Tools",
+    "T1611": "Escape to Host",
+    "T1068": "Exploitation for Privilege Escalation",
+    "T1187": "Forced Authentication",
+    "T1505.003": "Server Software Component: Web Shell",
+}
 
 
 def build_meta(
@@ -72,19 +88,69 @@ def _bucket_rows(rows: list[PriorityRow]) -> dict[str, list[PriorityRow]]:
 
 
 def _render_bucket_section(title: str, rows: list[PriorityRow]) -> str:
-    body = [f"## {title} ({len(rows)})", ""]
+    total = len(rows)
+    body = [f"## {title} ({total})", ""]
     if not rows:
         body.append("_No CVEs in this bucket._")
         body.append("")
         return "\n".join(body)
     body.append("| Score | CVE | CVSS | Source | ATT&CK |")
     body.append("|---|---|---|---|---|")
-    for row in rows:
+    for row in rows[:_MAX_ROWS_PER_BUCKET]:
         techniques = ", ".join(row.attack_techniques) or "—"
         cvss = "—" if row.cvss is None else f"{row.cvss:.1f}"
         body.append(
             f"| {row.priority_score} | {row.id} | {cvss} | {row.source.value} | {techniques} |"
         )
+    if total > _MAX_ROWS_PER_BUCKET:
+        body.append("")
+        body.append(
+            f"_Showing {_MAX_ROWS_PER_BUCKET} of {total} — see"
+            f" [`priority.jsonl`](priority.jsonl) for the full list._"
+        )
+    body.append("")
+    return "\n".join(body)
+
+
+_METHODOLOGY_SECTION = (
+    "## Methodology\n"
+    "\n"
+    "Priority scores follow the locked 0-10 formula in"
+    " [docs/scoring.md](../docs/scoring.md). Formula shape adapted from"
+    " [cve-sentry](https://github.com/jcastanedacano/cve-sentry)'s"
+    " Sentry Priority Score; implementation is original.\n"
+)
+
+
+def _render_by_source(rows: list[PriorityRow]) -> str:
+    counts = Counter(row.source.value for row in rows)
+    body = ["## By source", ""]
+    if not counts:
+        body.append("_No rows._")
+        body.append("")
+        return "\n".join(body)
+    body.append("| Source | Count |")
+    body.append("|---|---|")
+    for source_slug, count in counts.most_common():
+        body.append(f"| {source_slug} | {count} |")
+    body.append("")
+    return "\n".join(body)
+
+
+def _render_top_attack_techniques(rows: list[PriorityRow]) -> str:
+    counts = Counter(
+        technique for row in rows for technique in row.attack_techniques
+    )
+    body = ["## Top ATT&CK techniques", ""]
+    if not counts:
+        body.append("_No ATT&CK techniques enriched._")
+        body.append("")
+        return "\n".join(body)
+    body.append("| Technique | Count | Name |")
+    body.append("|---|---|---|")
+    for technique_id, count in counts.most_common():
+        name = _TECHNIQUE_NAMES.get(technique_id, "—")
+        body.append(f"| {technique_id} | {count} | {name} |")
     body.append("")
     return "\n".join(body)
 
@@ -98,6 +164,9 @@ def _render_report(rows: list[PriorityRow], meta: Meta) -> str:
         _render_bucket_section("Act-Now", buckets["act_now"]),
         _render_bucket_section("This-Week", buckets["this_week"]),
         _render_bucket_section("Monitor", buckets["monitor"]),
+        _render_top_attack_techniques(rows),
+        _render_by_source(rows),
+        _METHODOLOGY_SECTION,
     ]
     return frontmatter + "\n".join(sections)
 
