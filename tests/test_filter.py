@@ -20,7 +20,12 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from gha_sec_feed_eval.filter import CategoriesConfig, load_categories, matched_categories
+from gha_sec_feed_eval.filter import (
+    CategoriesConfig,
+    load_categories,
+    matched_categories,
+    matched_keywords,
+)
 from gha_sec_feed_eval.models import FeedRow
 
 # -- helpers ----------------------------------------------------------------
@@ -177,6 +182,37 @@ def test_wildcard_keyword_does_not_match_without_prefix():
     """A URL without the wildcard's prefix substring does NOT match."""
     row = _row(refs=["https://example.com/unrelated/path"])
     assert matched_categories(row, _MINIMAL_CONFIG) == []
+
+
+# MARK: matched_keywords — specific triggering keywords
+
+
+def test_matched_keywords_returns_specific_triggering_keywords_de_duplicated():
+    """matched_keywords surfaces which keywords from stack_keywords actually
+    matched the row's refs — distinct from matched_categories which returns
+    only ecosystem slugs. Pins de-duplication when the same keyword matches
+    multiple refs."""
+    row = _row(
+        refs=[
+            "https://pypi.org/project/pydantic/2.10/",
+            "https://github.com/actions/checkout/issues/1",
+            "https://example.com/another-pydantic-ref",
+        ]
+    )
+    triggered = matched_keywords(row, _MINIMAL_CONFIG)
+    # Pydantic + actions/checkout matched; pydantic appears in two refs but
+    # surfaces once.
+    assert set(triggered) == {"pydantic", "actions/checkout"}
+    assert len(triggered) == 2
+
+
+def test_matched_keywords_supports_wildcard_keywords():
+    """Wildcard keywords from the config (e.g. @typescript-eslint/*) surface
+    in the matched list as their configured string, not the expanded match."""
+    row = _row(
+        refs=["https://example.com/@typescript-eslint/parser/issues"],
+    )
+    assert matched_keywords(row, _MINIMAL_CONFIG) == ["@typescript-eslint/*"]
 
 
 # MARK: stability / property tests
