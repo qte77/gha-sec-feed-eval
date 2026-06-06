@@ -121,6 +121,22 @@ def test_schema_version_error_is_loader_error_subclass():
     assert issubclass(SchemaVersionError, LoaderError)
 
 
+def test_parse_feed_accepts_1_1_0_row_with_additive_fields():
+    """Producer's 1.1.0 (gha-sec-feed/docs/SOURCES.md §"Schema + filter capability")
+    adds `cwes` + `description` and stays backward-compatible. The eval must
+    parse 1.1.0 rows AND surface both new fields on the returned FeedRow."""
+    row = {
+        **_VALID_ROW,
+        "schema_version": "1.1.0",
+        "cwes": ["CWE-89", "CWE-79"],
+        "description": "SQL injection in /api/v1/users",
+    }
+    [parsed] = parse_feed(_jsonl(row))
+    assert parsed.schema_version == "1.1.0"
+    assert parsed.cwes == ["CWE-89", "CWE-79"]
+    assert parsed.description == "SQL injection in /api/v1/users"
+
+
 # MARK: malformed input
 
 

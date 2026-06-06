@@ -40,7 +40,7 @@ src/gha_sec_feed_eval/
 ```text
 C1 feed.jsonl
    │
-   ▼ loader.parse() — pydantic strict; reject schema_version != "1.0.0"
+   ▼ loader.parse() — pydantic strict; accept schema_version in {"1.0.0", "1.1.0"} (see SUPPORTED_C1_SCHEMA_VERSIONS)
    │
    ▼ filter.apply() — categories/default.yaml; matched_categories per row
    │

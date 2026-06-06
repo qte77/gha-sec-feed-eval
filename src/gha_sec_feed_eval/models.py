@@ -14,6 +14,12 @@ from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StrictBool, StrictFloat, StrictStr
 
+# C1 schema versions the eval accepts. Producer's 1.1.0 adds `cwes` + `description`
+# additively (gha-sec-feed/docs/SOURCES.md §"Schema + filter capability"). Loader
+# gates on this set; FeedRow.schema_version stays unconstrained so the validation
+# error surfaces at the loader boundary, not as a pydantic Literal-mismatch.
+SUPPORTED_C1_SCHEMA_VERSIONS: tuple[str, ...] = ("1.0.0", "1.1.0")
+
 # We deliberately do NOT enable `strict=True` at model scope because it
 # would reject ISO-8601 strings → datetime and string-value → enum
 # coercion (both of which we want from JSON input). Strict typing is
@@ -74,7 +80,9 @@ class FeedRow(BaseModel):
     epss: Epss | None
     kev: StrictBool
     refs: list[StrictStr]
-    schema_version: Literal["1.0.0"]
+    cwes: list[StrictStr] = []
+    description: StrictStr = ""
+    schema_version: StrictStr
 
 
 class PriorityRow(FeedRow):
@@ -96,6 +104,9 @@ class Meta(BaseModel):
 
     schema_version: Literal["1.0.0"]
     input_schema_version: Literal["1.0.0"]
+    accepted_c1_schema_versions: list[StrictStr] = Field(
+        default_factory=lambda: list(SUPPORTED_C1_SCHEMA_VERSIONS),
+    )
     input_source: str
     last_run: AwareDatetime
     total: Annotated[int, Field(ge=0)]

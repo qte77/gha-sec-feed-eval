@@ -120,8 +120,7 @@ def test_priority_jsonl_lines_round_trip_to_priorityrow(tmp_path):
     for raw_line in text.splitlines():
         if not raw_line.strip():
             continue
-        reconstructed = PriorityRow.model_validate_json(raw_line)
-        assert reconstructed.schema_version == "1.0.0"
+        PriorityRow.model_validate_json(raw_line)
 
 
 def test_priority_jsonl_empty_when_no_rows(tmp_path):
@@ -141,7 +140,10 @@ def test_priority_jsonl_empty_when_no_rows(tmp_path):
 
 def test_priority_meta_is_valid_json_and_loads_as_meta(tmp_path):
     """Round-trip: write_outputs emits priority-meta.json that loads
-    back through the Meta pydantic schema."""
+    back through the Meta pydantic schema. Also pins the consumer-facing
+    C1 compat range — removing this field silently breaks downstream
+    integrations that read priority-meta.json to learn what feeds are
+    accepted."""
     from gha_sec_feed_eval.models import Meta
 
     write_outputs(
@@ -154,6 +156,7 @@ def test_priority_meta_is_valid_json_and_loads_as_meta(tmp_path):
     text = (tmp_path / "priority-meta.json").read_text(encoding="utf-8")
     meta = Meta.model_validate_json(text)
     assert meta.total == 5
+    assert meta.accepted_c1_schema_versions == ["1.0.0", "1.1.0"]
 
 
 # MARK: REPORT.md

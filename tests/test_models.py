@@ -82,23 +82,6 @@ def test_meta_example_round_trips_through_json():
     assert rt == meta
 
 
-# MARK: schema version pin
-
-
-@pytest.mark.parametrize("bad_version", ["0.9.0", "2.0.0", "1.0", "1.0.0-rc1", "", "1"])
-def test_feedrow_rejects_non_1_0_0_schema_version(bad_version: str):
-    payload = {**C1_EXAMPLE, "schema_version": bad_version}
-    with pytest.raises(ValidationError):
-        FeedRow.model_validate(payload)
-
-
-@pytest.mark.parametrize("bad_version", ["0.9.0", "2.0.0", "1.0"])
-def test_priorityrow_rejects_non_1_0_0_schema_version(bad_version: str):
-    payload = {**C2_EXAMPLE, "schema_version": bad_version}
-    with pytest.raises(ValidationError):
-        PriorityRow.model_validate(payload)
-
-
 # MARK: strict mode (no coercion, no extras)
 
 

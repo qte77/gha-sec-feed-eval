@@ -12,9 +12,7 @@ import json
 
 from pydantic import ValidationError
 
-from gha_sec_feed_eval.models import FeedRow
-
-_PINNED_SCHEMA_VERSION = "1.0.0"
+from gha_sec_feed_eval.models import SUPPORTED_C1_SCHEMA_VERSIONS, FeedRow
 
 
 class LoaderError(Exception):
@@ -22,7 +20,7 @@ class LoaderError(Exception):
 
 
 class SchemaVersionError(LoaderError):
-    """C1 row drifted from the pinned schema version — stop and reconcile."""
+    """C1 row drifted outside the supported schema-version set — stop and reconcile."""
 
 
 def _is_blank(line: str) -> bool:
@@ -37,10 +35,10 @@ def _parse_line(line: str, line_no: int) -> FeedRow:
         raise LoaderError(msg) from exc
 
     observed_version = payload.get("schema_version")
-    if observed_version != _PINNED_SCHEMA_VERSION:
+    if observed_version not in SUPPORTED_C1_SCHEMA_VERSIONS:
         msg = (
             f"line {line_no}: schema_version {observed_version!r} drifted from"
-            f" pinned {_PINNED_SCHEMA_VERSION!r}"
+            f" supported {SUPPORTED_C1_SCHEMA_VERSIONS!r}"
         )
         raise SchemaVersionError(msg)
 
