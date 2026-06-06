@@ -1,8 +1,8 @@
 ---
 title: Contracts (C1 input + C2 output)
-purpose: Authoritative schemas for the C1 feed we consume and the C2 output we emit. Pinned at schema_version 1.0.0 for both.
+purpose: Authoritative schemas for the C1 feed we consume and the C2 output we emit. C1 accepts schema_version 1.0.0 or 1.1.0; C2 emits 1.0.0.
 created: 2026-06-01
-updated: 2026-06-01
+updated: 2026-06-05
 category: technical
 ---
 
@@ -10,8 +10,7 @@ category: technical
 
 **Source:** [raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl](https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl)
 **Format:** JSONL (one JSON object per line).
-**Pinned:** `schema_version: "1.0.0"`. Producer bump to 2.0.0 is a
-stop-and-ask trigger — adapt explicitly, not silently.
+**Accepted versions:** `schema_version` in `{"1.0.0", "1.1.0"}` (see `SUPPORTED_C1_SCHEMA_VERSIONS` in [`src/gha_sec_feed_eval/models.py`](../src/gha_sec_feed_eval/models.py)). The 1.1.0 bump is **additive**: `cwes` + `description` are new with safe defaults so 1.0.0 callers remain valid (per producer's [`docs/SOURCES.md` §"Schema + filter capability"](https://github.com/qte77/gha-sec-feed/blob/main/docs/SOURCES.md)). Any version outside this set is a stop-and-ask trigger — the loader rejects loudly.
 
 ```json
 {
@@ -23,28 +22,32 @@ stop-and-ask trigger — adapt explicitly, not silently.
   "epss": 0.87,
   "kev": true,
   "refs": ["https://..."],
-  "schema_version": "1.0.0"
+  "cwes": ["CWE-89"],
+  "description": "SQL injection in /api/v1/users",
+  "schema_version": "1.1.0"
 }
 ```
 
 ### Fields
 
-| Field | Type | Notes |
-|---|---|---|
-| `id` | string | CVE / IOC identifier |
-| `source` | enum | `nvd`, `cisa-kev`, `epss`, `ghsa`, `osv`, `redhat`, `ubuntu`, `urlhaus`, `threatfox`, `malwarebazaar` |
-| `published` | string | ISO-8601 with `Z` suffix |
-| `severity` | enum | `critical`, `high`, `medium`, `low`, `unknown` (lowercase) |
-| `cvss` | float \| null | CVSS v3 base score. Missing → treat as 0 for scoring. |
-| `epss` | float \| null | EPSS probability [0, 1]. Missing → fall back to live fetch (off by default in tests). |
-| `kev` | bool | Listed in CISA Known Exploited Vulnerabilities |
-| `refs` | string[] | Reference URLs (advisory, PoC, vendor) |
-| `schema_version` | string | Pinned to `"1.0.0"` |
+| Field | Type | Since | Notes |
+|---|---|---|---|
+| `id` | string | 1.0.0 | CVE / IOC identifier |
+| `source` | enum | 1.0.0 | `nvd`, `cisa-kev`, `epss`, `ghsa`, `osv`, `redhat`, `ubuntu`, `urlhaus`, `threatfox`, `malwarebazaar` |
+| `published` | string | 1.0.0 | ISO-8601 with `Z` suffix |
+| `severity` | enum | 1.0.0 | `critical`, `high`, `medium`, `low`, `unknown` (lowercase) |
+| `cvss` | float \| null | 1.0.0 | CVSS v3 base score. Missing → treat as 0 for scoring. |
+| `epss` | float \| null | 1.0.0 | EPSS probability [0, 1]. Missing → fall back to live fetch (off by default in tests). |
+| `kev` | bool | 1.0.0 | Listed in CISA Known Exploited Vulnerabilities |
+| `refs` | string[] | 1.0.0 | Reference URLs (advisory, PoC, vendor) |
+| `cwes` | string[] | **1.1.0** | CWE-prefixed weakness identifiers. Default `[]`. |
+| `description` | string | **1.1.0** | English free text. Default `""`. |
+| `schema_version` | string | 1.0.0 | One of `SUPPORTED_C1_SCHEMA_VERSIONS`. |
 
 ## C2 — Output (emitted to `data/priority.jsonl`)
 
 **Format:** JSONL. One C2 object per row that passed the category filter.
-**Locked:** `schema_version: "1.0.0"`.
+**Schema:** C2 inherits every C1 field (so `schema_version` is **forwarded** from the input row) and adds the enrichment fields below. The C2 schema itself — i.e. the set of enrichment fields — is locked at `1.0.0`; the eval's compat range is published per-run in `priority-meta.json.accepted_c1_schema_versions`.
 
 ```json
 {
@@ -56,12 +59,14 @@ stop-and-ask trigger — adapt explicitly, not silently.
   "epss": 0.87,
   "kev": true,
   "refs": ["..."],
+  "cwes": ["CWE-89"],
+  "description": "SQL injection in /api/v1/users",
   "priority_score": 9.0,
   "priority_category": "act_now",
   "attack_techniques": ["T1190", "T1078.004"],
   "d3fend_countermeasures": ["D3-NTA", "D3-MFA"],
   "matched_categories": ["python", "github-actions"],
-  "schema_version": "1.0.0"
+  "schema_version": "1.1.0"
 }
 ```
 
@@ -77,12 +82,13 @@ stop-and-ask trigger — adapt explicitly, not silently.
 
 ## Sibling — `data/priority-meta.json`
 
-Single JSON object (not JSONL) with run metadata.
+Single JSON object (not JSONL) with run metadata. `accepted_c1_schema_versions` is the **load-bearing self-declaration** of the eval's C1 compat range — consumers read this field to learn which feeds are safe to plug in.
 
 ```json
 {
   "schema_version": "1.0.0",
   "input_schema_version": "1.0.0",
+  "accepted_c1_schema_versions": ["1.0.0", "1.1.0"],
   "input_source": "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
   "last_run": "2026-05-31T12:00:00Z",
   "total": 234,
