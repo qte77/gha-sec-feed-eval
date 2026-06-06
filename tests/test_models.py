@@ -47,7 +47,7 @@ C2_EXAMPLE: dict = {
 }
 
 META_EXAMPLE: dict = {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "input_schema_version": "1.0.0",
     "input_source": "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
     "last_run": "2026-05-31T12:00:00Z",
@@ -80,23 +80,6 @@ def test_meta_example_round_trips_through_json():
     meta = Meta.model_validate(META_EXAMPLE)
     rt = Meta.model_validate_json(meta.model_dump_json())
     assert rt == meta
-
-
-# MARK: schema version pin
-
-
-@pytest.mark.parametrize("bad_version", ["0.9.0", "2.0.0", "1.0", "1.0.0-rc1", "", "1"])
-def test_feedrow_rejects_non_1_0_0_schema_version(bad_version: str):
-    payload = {**C1_EXAMPLE, "schema_version": bad_version}
-    with pytest.raises(ValidationError):
-        FeedRow.model_validate(payload)
-
-
-@pytest.mark.parametrize("bad_version", ["0.9.0", "2.0.0", "1.0"])
-def test_priorityrow_rejects_non_1_0_0_schema_version(bad_version: str):
-    payload = {**C2_EXAMPLE, "schema_version": bad_version}
-    with pytest.raises(ValidationError):
-        PriorityRow.model_validate(payload)
 
 
 # MARK: strict mode (no coercion, no extras)

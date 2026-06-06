@@ -10,7 +10,7 @@ category: technical
 
 | Abbrev | Expansion |
 |---|---|
-| **C1** | Contract 1 - the input feed format we consume from [`qte77/gha-sec-feed`](https://github.com/qte77/gha-sec-feed). Pinned at `schema_version: "1.0.0"`. See [`docs/contracts.md`](contracts.md). |
+| **C1** | Contract 1 - the input feed format we consume from [`qte77/gha-sec-feed`](https://github.com/qte77/gha-sec-feed). Accepts `schema_version` in `{"1.0.0", "1.1.0"}` (see `SUPPORTED_C1_SCHEMA_VERSIONS` in [`models.py`](../src/gha_sec_feed_eval/models.py)). Producer's 1.1.0 is additive — adds `cwes` + `description`. See [`docs/contracts.md`](contracts.md). |
 | **C2** | Contract 2 - the enriched + scored output this evaluator emits. Pinned at `schema_version: "1.0.0"`. See [`docs/contracts.md`](contracts.md). |
 | **GSFE_** | Env var prefix consumed by `AppSettings` (e.g. `GSFE_OFFLINE=1`, `GSFE_FEED_URL=...`). Defined in [`docs/architecture.md`](architecture.md). |
 | **REPORT.md** | Human-readable Markdown report rendered by `writer.py`. Sections: Act-Now / This-Week / Monitor / Top ATT&CK / By source / Methodology. |

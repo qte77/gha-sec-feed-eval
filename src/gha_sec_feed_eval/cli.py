@@ -17,7 +17,7 @@ from gha_sec_feed_eval.config import AppSettings
 from gha_sec_feed_eval.enrich.attack import AttackMapping, load_attack_mapping
 from gha_sec_feed_eval.enrich.d3fend import D3fendMapping, load_d3fend_mapping
 from gha_sec_feed_eval.enrich.epss import resolve_epss
-from gha_sec_feed_eval.filter import load_categories, matched_categories
+from gha_sec_feed_eval.filter import load_categories, matched_categories, matched_keywords
 from gha_sec_feed_eval.http_client import get as http_get
 from gha_sec_feed_eval.loader import LoaderError, parse_feed
 from gha_sec_feed_eval.models import FeedRow, PriorityRow
@@ -32,6 +32,7 @@ def _enrich_row(
     row: FeedRow,
     *,
     matches: list[str],
+    keywords: list[str],
     attack: AttackMapping,
     d3fend: D3fendMapping,
     epss: float | None,
@@ -54,6 +55,7 @@ def _enrich_row(
             "attack_techniques": techniques,
             "d3fend_countermeasures": countermeasures,
             "matched_categories": matches,
+            "matched_keywords": keywords,
         }
     )
 
@@ -88,11 +90,13 @@ def run(
         matches = matched_categories(row, categories)
         if not matches:
             continue
+        keywords = matched_keywords(row, categories)
         epss = resolve_epss(row, http_get=http_get)
         output.append(
             _enrich_row(
                 row,
                 matches=matches,
+                keywords=keywords,
                 attack=attack,
                 d3fend=d3fend,
                 epss=epss,

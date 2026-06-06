@@ -60,3 +60,21 @@ def matched_categories(row: FeedRow, config: CategoriesConfig) -> list[str]:
         if any(_keyword_matches(kw, hay) for kw in keywords for hay in haystacks):
             matches.append(slug)
     return matches
+
+
+def matched_keywords(row: FeedRow, config: CategoriesConfig) -> list[str]:
+    """Return the specific stack_keywords that matched any of `row.refs`.
+
+    Complements :func:`matched_categories` — same match logic, but surfaces
+    *which keywords* triggered the match. Wildcards return their configured
+    form (e.g. ``@typescript-eslint/*``), not the expanded substring.
+    """
+    haystacks = [ref.lower() for ref in row.refs]
+    matches: list[str] = []
+    for keywords in config.stack_keywords.values():
+        for kw in keywords:
+            if kw in matches:
+                continue
+            if any(_keyword_matches(kw, hay) for hay in haystacks):
+                matches.append(kw)
+    return matches
