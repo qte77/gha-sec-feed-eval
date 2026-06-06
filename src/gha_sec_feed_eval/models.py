@@ -95,6 +95,7 @@ class PriorityRow(FeedRow):
     attack_techniques: list[StrictStr]
     d3fend_countermeasures: list[StrictStr]
     matched_categories: list[StrictStr]
+    matched_keywords: list[StrictStr] = []
 
 
 class Meta(BaseModel):
@@ -102,7 +103,7 @@ class Meta(BaseModel):
 
     model_config = _STRICT
 
-    schema_version: Literal["1.0.0"]
+    schema_version: Literal["1.1.0"]
     input_schema_version: Literal["1.0.0"]
     accepted_c1_schema_versions: list[StrictStr] = Field(
         default_factory=lambda: list(SUPPORTED_C1_SCHEMA_VERSIONS),

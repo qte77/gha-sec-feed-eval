@@ -53,7 +53,7 @@ def build_meta(
     by_category = Counter(row.priority_category.value for row in materialised)
     by_source = Counter(row.source.value for row in materialised)
     return Meta(
-        schema_version="1.0.0",
+        schema_version="1.1.0",
         input_schema_version="1.0.0",
         input_source=input_source,
         last_run=last_run,

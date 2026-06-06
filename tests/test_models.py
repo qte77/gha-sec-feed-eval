@@ -47,7 +47,7 @@ C2_EXAMPLE: dict = {
 }
 
 META_EXAMPLE: dict = {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "input_schema_version": "1.0.0",
     "input_source": "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
     "last_run": "2026-05-31T12:00:00Z",
