@@ -47,7 +47,7 @@ category: technical
 ## C2 — Output (emitted to `data/priority.jsonl`)
 
 **Format:** JSONL. One C2 object per row that passed the category filter.
-**Schema:** C2 inherits every C1 field (so `schema_version` is **forwarded** from the input row) and adds the enrichment fields below. The C2 schema itself — i.e. the set of enrichment fields — is locked at `1.0.0`; the eval's compat range is published per-run in `priority-meta.json.accepted_c1_schema_versions`.
+**Schema:** C2 inherits every C1 field (so per-row `schema_version` is **forwarded** from the input row) and adds the enrichment fields below. The C2 envelope schema — i.e. the priority-meta.json shape, which carries the eval-side version declaration — is at `1.1.0` (added `accepted_c1_schema_versions`; PriorityRow gained `matched_keywords`). The eval's compat range is published per-run in `priority-meta.json.accepted_c1_schema_versions`.
 
 ```json
 {
@@ -66,6 +66,7 @@ category: technical
   "attack_techniques": ["T1190", "T1078.004"],
   "d3fend_countermeasures": ["D3-NTA", "D3-MFA"],
   "matched_categories": ["python", "github-actions"],
+  "matched_keywords": ["django", "actions/checkout"],
   "schema_version": "1.1.0"
 }
 ```
@@ -79,6 +80,7 @@ category: technical
 | `attack_techniques` | string[] | MITRE ATT&CK IDs (e.g., `T1190`). Empty if no mapping. |
 | `d3fend_countermeasures` | string[] | MITRE D3FEND IDs. Empty if no mapping. |
 | `matched_categories` | string[] | Ecosystem slugs from `categories/default.yaml` that matched |
+| `matched_keywords` | string[] | The specific stack_keywords that matched any of `refs` (audit trail for `matched_categories`). Default `[]`. **Added in C2 1.1.0.** |
 
 ## Sibling — `data/priority-meta.json`
 
@@ -86,7 +88,7 @@ Single JSON object (not JSONL) with run metadata. `accepted_c1_schema_versions` 
 
 ```json
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "input_schema_version": "1.0.0",
   "accepted_c1_schema_versions": ["1.0.0", "1.1.0"],
   "input_source": "https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl",
