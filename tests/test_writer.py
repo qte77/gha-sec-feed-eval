@@ -243,9 +243,7 @@ def test_report_md_by_source_section_lists_each_source_with_counts_desc(tmp_path
     # Each source appears with its exact count in the same line.
     for source_slug, count in [("nvd", 3), ("ghsa", 2), ("osv", 1)]:
         matching = [
-            line
-            for line in section.splitlines()
-            if source_slug in line and f"| {count} |" in line
+            line for line in section.splitlines() if source_slug in line and f"| {count} |" in line
         ]
         assert matching, f"no row for source={source_slug!r} count={count}"
 

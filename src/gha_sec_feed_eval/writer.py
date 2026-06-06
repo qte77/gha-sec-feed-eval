@@ -138,9 +138,7 @@ def _render_by_source(rows: list[PriorityRow]) -> str:
 
 
 def _render_top_attack_techniques(rows: list[PriorityRow]) -> str:
-    counts = Counter(
-        technique for row in rows for technique in row.attack_techniques
-    )
+    counts = Counter(technique for row in rows for technique in row.attack_techniques)
     body = ["## Top ATT&CK techniques", ""]
     if not counts:
         body.append("_No ATT&CK techniques enriched._")
