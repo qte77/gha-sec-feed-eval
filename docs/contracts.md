@@ -1,6 +1,6 @@
 ---
 title: Contracts (C1 input + C2 output)
-purpose: Authoritative schemas for the C1 feed we consume and the C2 output we emit. C1 accepts schema_version 1.0.0 or 1.1.0; C2 emits 1.0.0.
+purpose: Authoritative schemas for the C1 feed we consume and the C2 output we emit. C1 accepts schema_version 1.0.0, 1.1.0, or 1.2.0; C2 emits 1.0.0.
 created: 2026-06-01
 updated: 2026-06-05
 category: technical
@@ -10,7 +10,7 @@ category: technical
 
 **Source:** [raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl](https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl)
 **Format:** JSONL (one JSON object per line).
-**Accepted versions:** `schema_version` in `{"1.0.0", "1.1.0"}` (see `SUPPORTED_C1_SCHEMA_VERSIONS` in [`src/gha_sec_feed_eval/models.py`](../src/gha_sec_feed_eval/models.py)). The 1.1.0 bump is **additive**: `cwes` + `description` are new with safe defaults so 1.0.0 callers remain valid (per producer's [`docs/SOURCES.md` §"Schema + filter capability"](https://github.com/qte77/gha-sec-feed/blob/main/docs/SOURCES.md)). Any version outside this set is a stop-and-ask trigger — the loader rejects loudly.
+**Accepted versions:** `schema_version` in `{"1.0.0", "1.1.0", "1.2.0"}` (see `SUPPORTED_C1_SCHEMA_VERSIONS` in [`src/gha_sec_feed_eval/models.py`](../src/gha_sec_feed_eval/models.py)). Both bumps are **additive**: 1.1.0 added `cwes` + `description`; 1.2.0 adds `vendors` + `keywords_matched` — all with safe defaults so 1.0.0 / 1.1.0 callers remain valid (per producer's [`docs/SOURCES.md` §"Schema + filter capability"](https://github.com/qte77/gha-sec-feed/blob/main/docs/SOURCES.md)). Any version outside this set is a stop-and-ask trigger — the loader rejects loudly.
 
 ```json
 {
@@ -42,7 +42,11 @@ category: technical
 | `refs` | string[] | 1.0.0 | Reference URLs (advisory, PoC, vendor) |
 | `cwes` | string[] | **1.1.0** | CWE-prefixed weakness identifiers. Default `[]`. |
 | `description` | string | **1.1.0** | English free text. Default `""`. |
+| `vendors` | string[] | **1.2.0** | CPE-derived vendor identifiers (lowercased). Default `[]`. |
+| `keywords_matched` | string[] | **1.2.0** | Subset of producer's `settings.keywords` that matched `id + description`. Per-producer-run semantic. Default `[]`. **Distinct from C2's `matched_keywords`**, which reflects eval's `stack_keywords` vs `refs`. |
 | `schema_version` | string | 1.0.0 | One of `SUPPORTED_C1_SCHEMA_VERSIONS`. |
+
+> **Naming distinction:** C1 `keywords_matched` (producer-side, `settings.keywords` vs `id + description`) ≠ C2 `matched_keywords` (eval-side, `stack_keywords` vs `refs`). The collision was deliberately avoided by keeping the two names distinct.
 
 ## C2 — Output (emitted to `data/priority.jsonl`)
 

@@ -137,6 +137,23 @@ def test_parse_feed_accepts_1_1_0_row_with_additive_fields():
     assert parsed.description == "SQL injection in /api/v1/users"
 
 
+def test_parse_feed_accepts_1_2_0_row_with_vendors_and_keywords_matched():
+    """Producer's 1.2.0 (gha-sec-feed/docs/SOURCES.md §"Schema 1.2.0")
+    adds CPE-derived `vendors` and filter-derived `keywords_matched`
+    additively. The eval must parse 1.2.0 rows AND surface both new
+    fields on the returned FeedRow."""
+    row = {
+        **_VALID_ROW,
+        "schema_version": "1.2.0",
+        "vendors": ["python", "apache"],
+        "keywords_matched": ["fastapi"],
+    }
+    [parsed] = parse_feed(_jsonl(row))
+    assert parsed.schema_version == "1.2.0"
+    assert parsed.vendors == ["python", "apache"]
+    assert parsed.keywords_matched == ["fastapi"]
+
+
 # MARK: malformed input
 
 
