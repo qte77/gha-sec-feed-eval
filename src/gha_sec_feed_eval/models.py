@@ -15,10 +15,11 @@ from typing import Annotated, Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StrictBool, StrictFloat, StrictStr
 
 # C1 schema versions the eval accepts. Producer's 1.1.0 adds `cwes` + `description`
-# additively (gha-sec-feed/docs/SOURCES.md §"Schema + filter capability"). Loader
-# gates on this set; FeedRow.schema_version stays unconstrained so the validation
-# error surfaces at the loader boundary, not as a pydantic Literal-mismatch.
-SUPPORTED_C1_SCHEMA_VERSIONS: tuple[str, ...] = ("1.0.0", "1.1.0")
+# additively (gha-sec-feed/docs/SOURCES.md §"Schema + filter capability"); 1.2.0 adds
+# `vendors` + `keywords_matched` additively (§"Schema 1.2.0"). Loader gates on this
+# set; FeedRow.schema_version stays unconstrained so the validation error surfaces at
+# the loader boundary, not as a pydantic Literal-mismatch.
+SUPPORTED_C1_SCHEMA_VERSIONS: tuple[str, ...] = ("1.0.0", "1.1.0", "1.2.0")
 
 # We deliberately do NOT enable `strict=True` at model scope because it
 # would reject ISO-8601 strings → datetime and string-value → enum
@@ -82,6 +83,8 @@ class FeedRow(BaseModel):
     refs: list[StrictStr]
     cwes: list[StrictStr] = []
     description: StrictStr = ""
+    vendors: list[StrictStr] = []
+    keywords_matched: list[StrictStr] = []
     schema_version: StrictStr
 
 

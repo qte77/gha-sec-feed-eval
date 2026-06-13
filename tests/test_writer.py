@@ -157,7 +157,7 @@ def test_priority_meta_is_valid_json_and_loads_as_meta(tmp_path):
     text = (tmp_path / "priority-meta.json").read_text(encoding="utf-8")
     meta = Meta.model_validate_json(text)
     assert meta.total == 5
-    assert meta.accepted_c1_schema_versions == ["1.0.0", "1.1.0"]
+    assert meta.accepted_c1_schema_versions == ["1.0.0", "1.1.0", "1.2.0"]
 
 
 # MARK: REPORT.md
