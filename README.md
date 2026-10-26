@@ -1,92 +1,58 @@
 # gha-sec-feed-eval
 
-![Version](https://img.shields.io/badge/version-0.0.0-blue)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+> Ranks a security-advisory feed against your stack and tells you what to fix
+> now — as a reusable GitHub Actions workflow or a standalone CLI.
+
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.0.0-blue)](CHANGELOG.md)
 [![CodeQL](https://github.com/qte77/gha-sec-feed-eval/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/gha-sec-feed-eval/actions/workflows/codeql.yaml)
 [![validate](https://github.com/qte77/gha-sec-feed-eval/actions/workflows/validate.yaml/badge.svg)](https://github.com/qte77/gha-sec-feed-eval/actions/workflows/validate.yaml)
 
-Evaluator that consumes the [`qte77/gha-sec-feed`](https://github.com/qte77/gha-sec-feed)
-C1 JSONL feed, scores rows on a locked 0–10 priority formula
-(adapted from
-[`jcastanedacano/cve-sentry`](https://github.com/jcastanedacano/cve-sentry)),
-enriches with MITRE ATT&CK + D3FEND, and emits a C2 JSONL output plus a
-Markdown report. Ships as a reusable GitHub Actions workflow and a
-standalone CLI.
+## What
 
-## What it does
+- Reads the [`qte77/gha-sec-feed`](https://github.com/qte77/gha-sec-feed) C1
+  JSONL feed (NVD, GHSA, OSV, CISA KEV)
+- Keeps only rows that match your ecosystems (Python, TypeScript, Rust, Go,
+  Docker, GitHub Actions by default; overridable)
+- Scores each row 0–10 from KEV listing, exploit evidence, EPSS, recency and
+  CVSS
+- Adds MITRE ATT&CK techniques and D3FEND countermeasures from vendored data
+- Buckets rows into Act-Now / This-Week / Monitor
+- Writes `priority.jsonl` (C2), `priority-meta.json` and a `REPORT.md`
 
-```text
-C1 feed.jsonl (gha-sec-feed)
-   │
-   ▼ filter (categories) → score (0–10) → enrich (ATT&CK + D3FEND)
-   │
-   ▼
-data/priority.jsonl       — C2 rows (one JSON object per line)
-data/priority-meta.json   — counts, last_run, schema_version
-data/REPORT.md            — Act-Now / This-Week / Monitor view
-```
-
-## Quickstart
-
-```bash
-make setup_dev   # uv sync (default groups: dev + test)
-make help        # canonical command list
-make validate    # lint + types + complexity + lint_md + lint_links + test_cov
-make smoke       # CLI run against tests/fixtures/feed-min.jsonl (after 2b)
-```
-
-## Reusable workflow
-
-Pin to a released tag — `v0.1.0` lands at phase 2d.
+## How
 
 ```yaml
 jobs:
   eval:
     uses: qte77/gha-sec-feed-eval/.github/workflows/eval.yaml@v0.1.0
     with:
-      feed_url: https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl
-      categories_file: ""                       # optional override; empty = defaults
-      output_dir: ./data
-      eval_ref: v0.1.0                          # must match @vX.Y.Z above
+      eval_ref: v0.1.0   # must match the @ref above
 ```
 
-See [`docs/consumer-guide.md`](docs/consumer-guide.md) for the full
-integration recipe (lands in 2d).
+Or locally: `make setup_dev && make smoke` (offline fixture run). Full recipe,
+inputs and outputs: [`docs/consumer-guide.md`](docs/consumer-guide.md);
+commands: `make help`.
 
-## Standalone CLI
+## Why
 
-```bash
-python -m gha_sec_feed_eval \
-  --feed-url https://raw.githubusercontent.com/qte77/gha-sec-feed/main/data/feed.jsonl \
-  --output-dir ./data
-```
+Raw advisory feeds are high-volume and unranked, and scanners flag everything
+in a dependency tree. This evaluator narrows a feed to your stack, ranks it
+with a published formula adapted from
+[`jcastanedacano/cve-sentry`](https://github.com/jcastanedacano/cve-sentry),
+and adds ATT&CK + D3FEND context so each row says what to defend, not only
+what is broken.
 
-CLI lands in phase 2b — see [`docs/architecture.md`](docs/architecture.md).
+## Refs
 
-## Contracts
-
-| Contract | Version | Spec |
-|---|---|---|
-| **C1** (Contract 1) - input from `gha-sec-feed` | `1.0.0` (pinned) | [`docs/contracts.md`](docs/contracts.md) |
-| **C2** (Contract 2) - output of this evaluator | `1.0.0` | [`docs/contracts.md`](docs/contracts.md) |
-
-Abbreviations used across the project (C1 / C2 / CVE / CVSS / KEV / EPSS /
-ATT&CK / D3FEND / SBOM / SPDX / SARIF / GSFE_ / ...) are defined in
-[`docs/GLOSSARY.md`](docs/GLOSSARY.md).
-
-## Docs
-
-- [Architecture](docs/architecture.md) — module map, data flow, boundary
-  failure policy
-- [Contracts](docs/contracts.md) — C1 + C2 schemas
-- [Scoring](docs/scoring.md) — formula + cve-sentry citation
-- [Categories](docs/categories.md) — default ecosystems + consumer override
-- [Consumer guide](docs/consumer-guide.md) — wiring the reusable workflow
-  (lands 2d)
-- [Refresh vendored data](docs/refresh-vendored-data.md) — ATT&CK + D3FEND
-  refresh runbook (lands 2b)
-- [Glossary](docs/GLOSSARY.md) — abbreviations used across the project
-- [Changelog](CHANGELOG.md) — semver, scriv-managed fragments
+- [Architecture](docs/architecture.md)
+- [Contracts (C1 + C2)](docs/contracts.md)
+- [Scoring](docs/scoring.md)
+- [Categories](docs/categories.md)
+- [Consumer guide](docs/consumer-guide.md)
+- [Refresh vendored data](docs/refresh-vendored-data.md)
+- [Glossary](docs/GLOSSARY.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 
