@@ -5,7 +5,7 @@ name: tag-release
 # squash-merge of a bump-my-version release PR) and creates the
 # **signed** annotated `v$NEW` tag against the actual main commit
 # via the GitHub API (POST /repos/.../git/tags) — required by
-# gh-security-posture rule 03 which mandates required_signatures
+# the private security-posture repo's rule 03, which mandates required_signatures
 # on refs/tags/v*. Plain `git tag -a -m` would produce an unsigned
 # tag and be rejected at push.
 
