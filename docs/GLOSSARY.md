@@ -44,6 +44,6 @@ category: technical
 | **JSONL** | [JSON Lines](https://jsonlines.org/) - one JSON object per line. Used for both C1 input and C2 output. |
 | **SBOM** | [Software Bill of Materials](https://www.cisa.gov/sbom). Produced by [`sbom.yaml`](../.github/workflows/sbom.yaml) (calls [qte77/gha-sbom-action](https://github.com/qte77/gha-sbom-action)) and at release by [Syft](https://github.com/anchore/syft) via [`publish-release.yaml`](../.github/workflows/publish-release.yaml). |
 | **SPDX** | [Software Package Data Exchange](https://spdx.dev/) - SBOM format we emit (`sbom.spdx.json`). |
-| **SARIF** | [Static Analysis Results Interchange Format](https://sarifweb.azurewebsites.net/) - what we upload to [GitHub Code Scanning](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning). |
+| **SARIF** | [Static Analysis Results Interchange Format](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) - what we upload to [GitHub Code Scanning](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning). |
 | **YAML** | [YAML Ain't Markup Language](https://yaml.org/) - config + GitHub Actions workflow file format. |
 | **TOML** | [Tom's Obvious Minimal Language](https://toml.io/) - `pyproject.toml` config format. |

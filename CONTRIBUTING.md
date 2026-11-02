@@ -47,12 +47,12 @@ file disagrees with `make help`, `make help` wins.
 
 - **Direct pushes to `main` are blocked** by branch protection. All
   changes land via PR + squash-merge.
-- **Tags on `v*` require signatures** (gh-security-posture rule `03`).
+- **Tags on `v*` require signatures** (private security-posture repo rule `03`).
   The `tag-release.yaml` workflow creates signed tag objects via the
   GitHub API rather than `git tag -a -m`.
 - **Pin every `uses:` to a full-length commit SHA** in any new or
   edited workflow (e.g. `actions/checkout@de0fac2e…`). Allowlisted
-  actions are documented in `gh-security-posture/05-mandatory-actions-selected-allowlist.json`.
+  actions are documented in the private security-posture repo's mandatory-actions allowlist file.
 
 ## Changelog fragments
 
@@ -87,7 +87,7 @@ A fragment file looks like:
    `tag-release.yaml` triggers on push-to-`main` paths:`pyproject.toml`,
    diffs the version line, creates the **signed** annotated `v{new}`
    tag against the main commit via `POST /repos/.../git/tags` (signed
-   tag required by gh-security-posture rule `03`).
+   tag required by the private security-posture repo's rule `03`).
 3. **Publish release.**
    `gh workflow run publish-release.yaml` → extracts notes from the
    `## [vX.Y.Z]` block in `CHANGELOG.md`, creates the GitHub Release,
