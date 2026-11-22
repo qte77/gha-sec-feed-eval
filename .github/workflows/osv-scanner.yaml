@@ -34,5 +34,5 @@ jobs:
       # scanning them reports already-fixed versions. uv.lock is the source of truth.
       scan-args: |-
         --recursive
-        --x-exclude=SBOM
+        --x-exclude=r:docs/SBOM$
         ./
