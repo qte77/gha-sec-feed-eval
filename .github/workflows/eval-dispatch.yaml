@@ -26,6 +26,9 @@ concurrency:
 
 jobs:
   call_eval:
+    # Reason: a called workflow can't exceed the caller's grant, and eval.yaml needs contents: read
+    permissions:
+      contents: read
     uses: ./.github/workflows/eval.yaml
     with:
       # `inputs.feed_url` / `inputs.categories_file` are strings; pass through
