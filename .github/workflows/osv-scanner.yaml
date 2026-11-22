@@ -30,6 +30,9 @@ jobs:
       contents: read
       security-events: write
     with:
+      # docs/SBOM/ holds generated SBOMs that lag uv.lock until the next SBOM PR;
+      # scanning them reports already-fixed versions. uv.lock is the source of truth.
       scan-args: |-
         --recursive
+        --x-exclude=r:docs/SBOM$
         ./
