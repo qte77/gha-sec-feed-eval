@@ -90,7 +90,7 @@ jobs:
 
       - name: Upload priority-output artifact
         id: upload
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v6.1.0
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: priority-output
           path: ${{ inputs.output_dir }}/
